@@ -9,6 +9,10 @@ from transformers import (
   ElectraTokenizer
 )
 
+
+# GPU 사용
+device = torch.device("cuda")
+
 class ElectraClassificationHead(nn.Module):
   """Head for sentence-level classification tasks."""
 
@@ -28,12 +32,12 @@ class ElectraClassificationHead(nn.Module):
     return x
 
 class HwangariSentimentModel(ElectraPreTrainedModel):
-  def __init__(self, config, num_labels):
+  def __init__(self, config):
     super().__init__(config)
-    self.num_labels = num_labels
-    self.electra = ElectraModel(config)
-    self.classifier = ElectraClassificationHead(config, num_labels)
-    self.dropout = nn.Dropout(config.hidden_dropout_prob)
+    self.num_labels = 3
+    self.electra = ElectraModel(config).to(device)
+    self.classifier = ElectraClassificationHead(config, 3).to(device)
+    self.dropout = nn.Dropout(config.hidden_dropout_prob).to(device)
 
     self.init_weights()
   def forward(
@@ -49,7 +53,7 @@ class HwangariSentimentModel(ElectraPreTrainedModel):
           output_hidden_states=None,
   ):
     discriminator_hidden_states = self.electra(input_ids, attention_mask, token_type_ids, position_ids, head_mask, inputs_embeds,
-                                               output_attentions,output_hidden_states,)
+                                               output_attentions,output_hidden_states)
 
     sequence_output = discriminator_hidden_states[0]
     pooled_output = self.dropout(sequence_output)
@@ -59,7 +63,7 @@ class HwangariSentimentModel(ElectraPreTrainedModel):
 
     if labels is not None:
       if self.num_labels == 1:
-        #  We are doing regression
+        #  We are doing regressionk,
         loss_fct = MSELoss()
         loss = loss_fct(logits.view(-1), labels.view(-1))
       else:
