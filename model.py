@@ -4,9 +4,7 @@ from torch.nn import CrossEntropyLoss, MSELoss
 from transformers.activations import get_activation
 from transformers import (
   ElectraPreTrainedModel,
-  ElectraModel,
-  ElectraConfig,
-  ElectraTokenizer
+  ElectraModel
 )
 
 
@@ -34,9 +32,9 @@ class ElectraClassificationHead(nn.Module):
 class HwangariSentimentModel(ElectraPreTrainedModel):
   def __init__(self, config):
     super().__init__(config)
-    self.num_labels = 3
+    self.num_labels = 7
     self.electra = ElectraModel(config).to(device)
-    self.classifier = ElectraClassificationHead(config, 3).to(device)
+    self.classifier = ElectraClassificationHead(config, 7).to(device)
     self.dropout = nn.Dropout(config.hidden_dropout_prob).to(device)
 
     self.init_weights()

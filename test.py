@@ -1,48 +1,55 @@
+import pandas as pd
 import torch
-import torch.nn as nn
-from torch.nn import CrossEntropyLoss, MSELoss
-from transformers.activations import get_activation
-from transformers import (
-  ElectraPreTrainedModel,
-  ElectraModel,
-  ElectraConfig,
-  ElectraTokenizer
-)
+from transformers import AutoTokenizer, ElectraForSequenceClassification
 import model
-
-model = ElectraModel.from_pretrained("monologg/koelectra-base-v3-discriminator")
-tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-base-v3-discriminator")
-
-text = "재밌다! 내용도 신선하고 의미도있으며 연기도 좋고 영상도좋다 즐거운 시간이었다"
-text2 = "다음에는 무슨 영화 보지?"
-encoded_dict = tokenizer(text, text2)
-enc = tokenizer.encode_plus(text)
-print(enc.keys())
-print(encoded_dict['token_type_ids'])
-
-# sequence_output, pooled_output, (hidden_states), (attentions)
-out = model(torch.tensor(enc["input_ids"]).unsqueeze(0), torch.tensor(enc["attention_mask"]).unsqueeze(0))
-print(out[0].shape)  # torch.size(batch size, 토큰화된 텍스트 길이, model output hidden size
-# torch.Size([1, 22, 768])
-
-token_representations = model(torch.tensor(enc["input_ids"]).unsqueeze(0))[0][0]
-print(enc["input_ids"])
-print(enc["attention_mask"])
-print(enc['token_type_ids'])
-print(tokenizer.decode(enc["input_ids"]))
-print(tokenizer.tokenize(tokenizer.decode(enc["input_ids"])))
-print(f"Length: {len(enc['input_ids'])}")
-print(token_representations.shape)
+import re
 
 
+labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
+
+tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
+text = "뭐야"
+inputs = tokenizer(
+  text,
+  return_tensors='pt',
+  truncation=True,
+  max_length=256,
+  pad_to_max_length=True,
+  add_special_tokens=True
+)
+
+
+# GPU 사용
+device = torch.device("cuda")
+model = model.HwangariSentimentModel.from_pretrained("monologg/koelectra-base-v3-discriminator").to(device)
+
+model.load_state_dict(torch.load("real_model.pt"))
+
+model.eval()
+
+input_ids = inputs['input_ids'].to(device)
+attention_mask = inputs['attention_mask'].to(device)
+output = model(input_ids.to(device), attention_mask.to(device))[0]
+_, prediction = torch.max(output, 1)
 
 
 
+label_loss_str = str(output).split(",")
+label_loss = [float(x.strip().replace(']','')) for x in label_loss_str[1:7]]
 
-classifier = model.HwangariSentimentModel(ElectraConfig.from_pretrained("monologg/koelectra-base-v3-discriminator"),5)
+nlabel = int(re.findall("\d+",str(prediction))[0])
 
-X = torch.tensor(enc["input_ids"]).unsqueeze(0)
-attn = torch.tensor(enc["attention_mask"]).unsqueeze(0)
-toktype = torch.tensor(enc["token_type_ids"]).unsqueeze(0)
+print(f'Review text : {text}')
 
-print(classifier(X, attn, toktype))
+#손실함수 값이 3.0이상인게 없으면 무감정(none)으로 분류
+for i in label_loss :
+  if i > 3.0 :
+    break
+  nlabel = 0
+
+
+print(f'Sentiment : {labels[nlabel]}')
+
+print("\n<감정 별 손실 함수 값>")
+for i in range(0,6):
+  print(labels[i+1], ":", label_loss[i])
