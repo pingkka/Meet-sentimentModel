@@ -5,12 +5,10 @@ from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer, ElectraForSequenceClassification, AdamW
 from tqdm.notebook import tqdm
 import model
+import matplotlib.pyplot as plt
+import matplotlib
 
 
-label2int = {
-    "joy" : 1,
-    "annoy" : 2
-}
 
 tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
 
@@ -33,6 +31,7 @@ class HwangariDataset(Dataset):
         text = row[0] #text
         y = row[1] #label
 
+
         inputs = self.tokenizer(
             text,
             return_tensors='pt',
@@ -49,9 +48,9 @@ class HwangariDataset(Dataset):
         return input_ids, attention_mask, y
 
 
-train_dataset = HwangariDataset("regex_result_joy_annoy.csv")
-print(train_dataset[0][0]) #input_ids
-print(train_dataset[0][1]) #attention_mask
+train_dataset = HwangariDataset("traindata.csv")
+test_dataset = HwangariDataset("testdata.csv")
+
 
 
 
@@ -72,7 +71,7 @@ model
 
 optimizer = AdamW(model.parameters(), lr=1e-5)
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-#test_loader = DataLoader(test_dataset, batch_size=16, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=16, shuffle=True)
 
 losses = []
 accuracies = []
@@ -113,6 +112,26 @@ losses, accuracies
 
 model.eval()
 
+test_correct = 0
+test_total = 0
 
-# 모델 저장하기
+
+
+
+
+for input_ids_batch, attention_masks_batch, y_batch in tqdm(test_loader):
+  y_batch = y_batch.to(device)
+  y_pred = model(input_ids_batch.to(device), attention_mask=attention_masks_batch.to(device))[0]
+  _, predicted = torch.max(y_pred, 1)
+  test_correct += (predicted == y_batch).sum()
+  test_total += len(y_batch)
+
+
+
+print("Accuracy:", test_correct.float() / test_total)
+
+
+#모델 저장하기
 torch.save(model.state_dict(), "real_model.pt")
+
+
