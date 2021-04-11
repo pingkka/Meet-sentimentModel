@@ -8,7 +8,7 @@ import re
 labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
 
 tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
-text = "뭐야"
+text = "무서워"
 inputs = tokenizer(
   text,
   return_tensors='pt',
@@ -20,7 +20,7 @@ inputs = tokenizer(
 
 
 # GPU 사용
-device = torch.device("cuda")
+device = torch.device("cpu")
 model = model.HwangariSentimentModel.from_pretrained("monologg/koelectra-base-v3-discriminator").to(device)
 
 model.load_state_dict(torch.load("real_model.pt"))
@@ -37,15 +37,18 @@ _, prediction = torch.max(output, 1)
 label_loss_str = str(output).split(",")
 label_loss = [float(x.strip().replace(']','')) for x in label_loss_str[1:7]]
 
-nlabel = int(re.findall("\d+",str(prediction))[0])
+
+
 
 print(f'Review text : {text}')
 
-#손실함수 값이 3.0이상인게 없으면 무감정(none)으로 분류
-for i in label_loss :
-  if i > 3.0 :
+#손실함수 값이 4.0이상인게 없으면 무감정(none)으로 분류
+nlabel = 0
+for i in label_loss:
+  if i > 4.0 :
+    nlabel = int(re.findall("\d+",str(prediction))[0])
     break
-  nlabel = 0
+
 
 
 print(f'Sentiment : {labels[nlabel]}')
