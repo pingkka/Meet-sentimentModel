@@ -20,10 +20,10 @@ inputs = tokenizer(
 
 
 # GPU 사용
-device = torch.device("cpu")
-model = model.HwangariSentimentModel.from_pretrained("monologg/koelectra-base-v3-discriminator").to(device)
+device = torch.device("cuda")
+model = model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v1").to(device)
 
-model.load_state_dict(torch.load("real_model.pt"))
+#model.load_state_dict(torch.load("real_model.pt"))
 
 model.eval()
 

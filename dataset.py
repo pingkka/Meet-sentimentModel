@@ -134,4 +134,6 @@ print("Accuracy:", test_correct.float() / test_total)
 #모델 저장하기
 torch.save(model.state_dict(), "real_model.pt")
 
+model.save_pretrained("haremotions-v1")
+
 
