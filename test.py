@@ -8,7 +8,7 @@ import re
 labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
 
 tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
-text = "무서워"
+text = "깜짝이야"
 inputs = tokenizer(
   text,
   return_tensors='pt',
@@ -23,7 +23,6 @@ inputs = tokenizer(
 device = torch.device("cuda")
 model = model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v1").to(device)
 
-#model.load_state_dict(torch.load("real_model.pt"))
 
 model.eval()
 
@@ -47,7 +46,7 @@ print(f'Review text : {text}')
 #손실함수 값이 4.0이상인게 없으면 무감정(none)으로 분류
 nlabel = 0
 for i in label_loss:
-  if i > 4.0 :
+  if i > 6.0 :
     nlabel = int(re.findall("\d+",str(prediction))[0])
     break
 

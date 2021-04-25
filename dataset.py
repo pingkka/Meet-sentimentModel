@@ -55,7 +55,7 @@ device = torch.device("cuda")
 
 model = model.HwangariSentimentModel.from_pretrained("monologg/koelectra-base-v3-discriminator").to(device)
 
-epochs = 50
+epochs = 10
 batch_size = 64
 
 # 모델 레이어 보기
@@ -122,9 +122,6 @@ print("Accuracy:", test_correct.float() / test_total)
 
 model.save_pretrained("haremotions-v1")
 
-device2 = torch.device("cpu")
-print(accuracies)
-print(accuracies[0])
 
 accuracies_float = []
 for accuracy in accuracies:
