@@ -34,8 +34,10 @@ _, prediction = torch.max(output, 1)
 
 
 
+print(output)
 label_loss_str = str(output).split(",")
 label_loss = [float(x.strip().replace(']','')) for x in label_loss_str[1:7]]
+print(label_loss)
 
 
 
