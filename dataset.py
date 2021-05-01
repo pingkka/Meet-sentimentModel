@@ -55,7 +55,7 @@ device = torch.device("cuda")
 
 model = model.HwangariSentimentModel.from_pretrained("monologg/koelectra-base-v3-discriminator").to(device)
 
-epochs = 10
+epochs = 30
 batch_size = 64
 
 # 모델 레이어 보기
@@ -134,7 +134,7 @@ plt.plot(range(epochs), accuracies_float, label='Accuracy', color='darkred')
 # 축 이름
 plt.xlabel('epochs')
 plt.ylabel('accuracy(%)')
-plt.title('epoch에 따른 검증 데이터에 대한 정확도 그래프')
+plt.title('epochs/accuracy(%)')
 plt.grid(linestyle='--', color='lavender')
 # 그래프 표시
 plt.show()
