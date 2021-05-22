@@ -3,12 +3,25 @@ import torch
 from transformers import AutoTokenizer, ElectraForSequenceClassification
 import model
 import re
-
+import numpy as np
+import librosa
+import pickle
 
 labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
 
+#Audio Sentiment Analysis Model
+filename = 'xgb_model3.model'
+# 모델 불러오기
+loaded_model = pickle.load(open(filename, 'rb'))
+
+
+none_words = ["안싫", "안 싫", "안무서", "안놀람", "안놀랐", "안행복", "안기뻐", "안빡","안우울", "안짜증", "안깜짝", "안무섭"]
+pass_words = ["안좋", "안 좋"]
+senti_loss = [5.0, 4.0, 6.5, 6.5, 9.0, 8.0]
+
 tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
-text = "무서워"
+text = "지금 막 퇴근해서 좀 쉬려고 하는데 회사에서 또 전화 왔어"
+enc = tokenizer.encode_plus(text)
 inputs = tokenizer(
   text,
   return_tensors='pt',
@@ -21,9 +34,54 @@ inputs = tokenizer(
 
 # GPU 사용
 device = torch.device("cuda")
+
+#Text Sentiment Analysis Model
 model = model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v1").to(device)
 
-#model.load_state_dict(torch.load("real_model.pt"))
+
+
+
+########################### TESTING ###########################
+test_file_path = "5_wav/5f05fb0bb140144dfcff0184.wav"
+X,sr = librosa.load(test_file_path, sr = None)
+stft = np.abs(librosa.stft(X))
+
+############# EXTRACTING AUDIO FEATURES #############
+mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40),axis=1)
+
+chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T,axis=0)
+
+mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T,axis=0)
+
+contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr,fmin=0.5*sr* 2**(-6)).T,axis=0)
+
+tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X),sr=sr*2).T,axis=0)
+
+features = np.hstack([mfccs,chroma,mel,contrast,tonnetz])
+
+
+
+
+
+x_chunk = np.array(features)
+x_chunk = x_chunk.reshape(1,np.shape(x_chunk)[0])
+y_chunk_model1 = loaded_model.predict(x_chunk)
+y_chunk_model1_proba = loaded_model.predict_proba(x_chunk)
+index = np.argmax(y_chunk_model1_proba)
+
+
+
+print("-----<Accuracy>------")
+for proba in range(0, len(y_chunk_model1_proba[0])):
+    print(labels[proba]+  " : " + str(y_chunk_model1_proba[0][proba]))
+
+print('\nEmotion:',labels[int(index)])
+print("--------------------")
+
+
+
+
+
 
 model.eval()
 
@@ -34,25 +92,51 @@ _, prediction = torch.max(output, 1)
 
 
 
+
 label_loss_str = str(output).split(",")
+
 label_loss = [float(x.strip().replace(']','')) for x in label_loss_str[1:7]]
+print(sum(label_loss))
 
 
 
 
 print(f'Review text : {text}')
 
+pre_result = int(re.findall("\d+",str(prediction))[0])
 #손실함수 값이 4.0이상인게 없으면 무감정(none)으로 분류
-nlabel = 0
-for i in label_loss:
-  if i > 4.0 :
-    nlabel = int(re.findall("\d+",str(prediction))[0])
-    break
+result = 0
+if label_loss[pre_result-1] >= senti_loss[pre_result-1]:
+  result = pre_result
 
 
+#안이 들어간 말로 결과가 나왔을 경우 가장 큰 값을 무시함 or 아예 무감정으로 분류되도록 함
+for i in none_words:
+  if i in text:
+    result = 0
+for j in pass_words:
+  if j in text:
+    label_loss[pre_result - 1] = 0
+    result = label_loss.index(max(label_loss)) + 1
 
-print(f'Sentiment : {labels[nlabel]}')
+
+print(f'Sentiment : {labels[result]}')
 
 print("\n<감정 별 손실 함수 값>")
 for i in range(0,6):
   print(labels[i+1], ":", label_loss[i])
+
+text_score = []
+audio_score = []
+total_score = []
+for i in range(0, len(label_loss)):
+  text_score.append(label_loss[i]/(sum(label_loss)+10))
+  audio_score.append(y_chunk_model1_proba[0][i+1] - 0.4)
+
+
+for i in range(0, len(audio_score)):
+  total_score.append(float(audio_score[i]) + float(text_score[i]))
+print(total_score)
+
+total_result = total_score.index(max(total_score))
+print("Result : ", labels[total_result+1])
