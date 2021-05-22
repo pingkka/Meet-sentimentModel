@@ -1,7 +1,7 @@
 import pandas as pd
 import torch
 from transformers import AutoTokenizer, ElectraForSequenceClassification
-import model
+import mymodel
 import re
 import numpy as np
 import librosa
@@ -36,7 +36,7 @@ inputs = tokenizer(
 device = torch.device("cuda")
 
 #Text Sentiment Analysis Model
-model = model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v1").to(device)
+model = mymodel.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v1").to(device)
 
 
 

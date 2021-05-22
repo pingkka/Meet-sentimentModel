@@ -19,7 +19,7 @@ max_fs = 0
 labels = []
 
 emotions = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
-label_max = 1000
+label_max = 1200
 label = 0
 
 path_data = ["4_wav", "5_wav"]

@@ -4,7 +4,7 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer, ElectraForSequenceClassification, AdamW
 from tqdm.notebook import tqdm
-import model
+import mymodel
 import matplotlib.pyplot as plt
 import matplotlib
 import re
@@ -53,7 +53,7 @@ test_dataset = HwangariDataset("testdata.csv")
 # GPU 사용
 device = torch.device("cuda")
 
-model = model.HwangariSentimentModel.from_pretrained("monologg/koelectra-base-v3-discriminator").to(device)
+model = mymodel.HwangariSentimentModel.from_pretrained("monologg/koelectra-base-v3-discriminator").to(device)
 
 epochs = 30
 batch_size = 64

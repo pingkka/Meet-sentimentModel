@@ -1,7 +1,7 @@
 import pandas as pd
 import torch
 from transformers import AutoTokenizer, ElectraForSequenceClassification
-import model
+import mymodel
 import re
 import numpy as np
 
@@ -29,7 +29,7 @@ print(tokenizer.tokenize(tokenizer.decode(enc["input_ids"])))
 
 # GPU 사용
 device = torch.device("cuda")
-model = model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v1").to(device)
+model = mymodel.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v1").to(device)
 
 
 model.eval()
