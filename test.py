@@ -10,7 +10,7 @@ import pickle
 labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
 
 #Audio Sentiment Analysis Model
-filename = 'xgb_model.model'
+filename = 'xgb_model3.model'
 # 모델 불러오기
 loaded_model = pickle.load(open(filename, 'rb'))
 
@@ -20,7 +20,7 @@ pass_words = ["안좋", "안 좋"]
 senti_loss = [5.0, 4.0, 6.5, 6.5, 9.0, 8.0]
 
 tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
-text = "빨리 졸작 끝났으면 좋겠다"
+text = "지금 막 퇴근해서 좀 쉬려고 하는데 회사에서 또 전화 왔어"
 enc = tokenizer.encode_plus(text)
 inputs = tokenizer(
   text,
@@ -42,7 +42,7 @@ model = model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v1"
 
 
 ########################### TESTING ###########################
-test_file_path = "AnyConv.com__a1.wav"
+test_file_path = "5_wav/5f05fb0bb140144dfcff0184.wav"
 X,sr = librosa.load(test_file_path, sr = None)
 stft = np.abs(librosa.stft(X))
 
@@ -67,13 +67,16 @@ x_chunk = np.array(features)
 x_chunk = x_chunk.reshape(1,np.shape(x_chunk)[0])
 y_chunk_model1 = loaded_model.predict(x_chunk)
 y_chunk_model1_proba = loaded_model.predict_proba(x_chunk)
-index = np.argmax(y_chunk_model1)
+index = np.argmax(y_chunk_model1_proba)
+
+
 
 print("-----<Accuracy>------")
 for proba in range(0, len(y_chunk_model1_proba[0])):
     print(labels[proba]+  " : " + str(y_chunk_model1_proba[0][proba]))
 
-print('\nEmotion:',labels[int(y_chunk_model1[0])])
+print('\nEmotion:',labels[int(index)])
+print("--------------------")
 
 
 
@@ -86,7 +89,6 @@ input_ids = inputs['input_ids'].to(device)
 attention_mask = inputs['attention_mask'].to(device)
 output = model(input_ids.to(device), attention_mask.to(device))[0]
 _, prediction = torch.max(output, 1)
-print(output)
 
 
 
@@ -94,9 +96,7 @@ print(output)
 label_loss_str = str(output).split(",")
 
 label_loss = [float(x.strip().replace(']','')) for x in label_loss_str[1:7]]
-print(label_loss)
 print(sum(label_loss))
-
 
 
 
@@ -125,3 +125,18 @@ print(f'Sentiment : {labels[result]}')
 print("\n<감정 별 손실 함수 값>")
 for i in range(0,6):
   print(labels[i+1], ":", label_loss[i])
+
+text_score = []
+audio_score = []
+total_score = []
+for i in range(0, len(label_loss)):
+  text_score.append(label_loss[i]/(sum(label_loss)+10))
+  audio_score.append(y_chunk_model1_proba[0][i+1] - 0.4)
+
+
+for i in range(0, len(audio_score)):
+  total_score.append(float(audio_score[i]) + float(text_score[i]))
+print(total_score)
+
+total_result = total_score.index(max(total_score))
+print("Result : ", labels[total_result+1])

@@ -19,10 +19,13 @@ max_fs = 0
 labels = []
 
 emotions = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
+label_max = 1000
+label = 0
 
 path_data = ["4_wav", "5_wav"]
 file_name = ['audio_sentiment.csv', 'audio_sentiment5.csv']
 
+#file_name = ['audio_sentiment_test.csv']
 
 
 def most_common_top_1(candidates):
@@ -34,7 +37,7 @@ def most_common_top_1(candidates):
 
 i = 0
 feature_all = np.array([])
-for a in range(0, len(path_data)) :
+for a in range(0, len(file_name)) :
     directories = os.listdir(path_data[a])
 
     print(directories)
@@ -57,13 +60,16 @@ for a in range(0, len(path_data)) :
         sentiment_line.append(line[11])
         most_sentiment = most_common_top_1(sentiment_line)
         print(most_sentiment)
-        if most_sentiment == "Neutral" : labels.append(0)
-        elif most_sentiment == "Happiness" : labels.append(1)
-        elif most_sentiment == "Angry" : labels.append(2)
-        elif most_sentiment == "Sadness" : labels.append(3)
-        elif most_sentiment == "Disgust" : labels.append(4)
-        elif most_sentiment == "Surprise" : labels.append(5)
-        else : labels.append(6)
+        if most_sentiment == "Neutral" :  label = 0
+        elif most_sentiment == "Happiness" : label = 1
+        elif most_sentiment == "Angry" : label = 2
+        elif most_sentiment == "Sadness" : label = 3
+        elif most_sentiment == "Disgust" : label = 4
+        elif most_sentiment == "Surprise" : label = 5
+        else : label = 6
+
+        if (labels.count(label) > label_max) : continue
+        else : labels.append(label)
 
 
         stft = np.abs(librosa.stft(X))
@@ -88,6 +94,67 @@ for a in range(0, len(path_data)) :
 
     f.close()
 
+#추가로 수집한 joy
+directories = os.listdir("result_joy")
+print(directories)
+
+for a in directories:
+    labels.append(1)
+    file_path = "result_joy/" + a
+
+    X, sr = librosa.load(file_path, sr=None)
+    stft = np.abs(librosa.stft(X))
+
+    ############# EXTRACTING AUDIO FEATURES #############
+    mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40), axis=1)
+
+    chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T, axis=0)
+
+    mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T, axis=0)
+
+    contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr, fmin=0.5 * sr * 2 ** (-6)).T, axis=0)
+
+    tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sr * 2).T, axis=0)
+
+    if (i == 0):
+        feature_all = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
+    else:
+        features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
+        feature_all = np.vstack([feature_all, features])
+
+
+
+#추가로 수집한 joy
+directories = os.listdir("result_sur")
+print(directories)
+
+for a in directories:
+    labels.append(5)
+    file_path = "result_sur/" + a
+
+    X, sr = librosa.load(file_path, sr=None)
+    stft = np.abs(librosa.stft(X))
+
+    ############# EXTRACTING AUDIO FEATURES #############
+    mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40), axis=1)
+
+    chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T, axis=0)
+
+    mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T, axis=0)
+
+    contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr, fmin=0.5 * sr * 2 ** (-6)).T, axis=0)
+
+    tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sr * 2).T, axis=0)
+
+    if (i == 0):
+        feature_all = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
+    else:
+        features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
+        feature_all = np.vstack([feature_all, features])
+
+
+for i in range(0, len(emotions)) :
+    print(emotions[i] + " : " + str(labels.count(i)))
 
 
 from copy import deepcopy
@@ -113,31 +180,31 @@ model = Sequential()
 #model.add(Dense(X_train.shape[1],input_dim =X_train.shape[1],init='normal',activation ='relu'))
 model.add(Dense(X_train.shape[1],input_dim =X_train.shape[1], activation ='relu'))
 
-model.add(Dense(400,activation ='relu'))
+model.add(Dense(64,activation ='relu'))
 
 model.add(Dropout(0.2))
 
-model.add(Dense(200,activation ='relu'))
+model.add(Dense(64,activation ='relu'))
 
 model.add(Dropout(0.2))
 
-model.add(Dense(100,activation ='relu'))
+model.add(Dense(64,activation ='relu'))
 
 model.add(Dropout(0.2))
-
+print("y_trainshape" + str(y_train.shape[1]))
 model.add(Dense(y_train.shape[1],activation ='softmax'))
 
 model.compile(loss = 'categorical_crossentropy',optimizer='adadelta',metrics=['accuracy'])
 
-model.fit(X_train,y_train, epochs=200, batch_size = 5,verbose=1)
+model.fit(X_train,y_train, epochs=500, batch_size = 64,verbose=1)
 
 
 model.evaluate(X_test,y_test)
 
 mlp_model = model.to_json()
-with open('mlp_model_relu_adadelta.json','w') as j:
+with open('mlp_model_relu_adadelta_t.json','w') as j:
     j.write(mlp_model)
-model.save_weights("mlp_relu_adadelta_mode.h5")
+model.save_weights("mlp_relu_adadelta_model_t.h5")
 
 y_pred_model1 = model.predict(X_test)
 y2 = np.argmax(y_pred_model1,axis=1)
@@ -155,15 +222,15 @@ model2 = Sequential()
 
 model2.add(Dense(X_train.shape[1],input_dim =X_train.shape[1],activation ='relu'))
 
-model2.add(Dense(400,activation ='tanh'))
+model2.add(Dense(64,activation ='tanh'))
 
 model2.add(Dropout(0.2))
 
-model2.add(Dense(200,activation ='tanh'))
+model2.add(Dense(64,activation ='tanh'))
 
 model2.add(Dropout(0.2))
 
-model2.add(Dense(100,activation ='sigmoid'))
+model2.add(Dense(64,activation ='sigmoid'))
 
 model2.add(Dropout(0.2))
 
@@ -171,15 +238,15 @@ model2.add(Dense(y_train.shape[1],activation ='softmax'))
 
 model2.compile(loss = 'categorical_crossentropy',optimizer='adadelta',metrics=['accuracy'])
 
-model2.fit(X_train,y_train,epochs=200,batch_size = 5,verbose=1)
+model2.fit(X_train,y_train,epochs=500,batch_size = 100,verbose=1)
 
 model2.evaluate(X_test, y_test)
 
 
 mlp_model2 = model2.to_json()
-with open('mlp_model_tanh_adadelta.json','w') as j:
+with open('mlp_model_tanh_adadelta_t.json','w') as j:
     j.write(mlp_model2)
-model2.save_weights("mlp_tanh_adadelta_model.h5")
+model2.save_weights("mlp_tanh_adadelta_model_t.h5")
 
 
 y_pred_model2 = model2.predict(X_test)
@@ -214,7 +281,7 @@ for i in range(y_pred3.shape[0]):
 print('Accuracy for model 3 : ' + str((count / y_pred3.shape[0]) * 100))
 
 # 파일명
-filename = 'xgb_model.model'
+filename = 'xgb_model_t.model'
 
 # 모델 저장
 pickle.dump(model3, open(filename, 'wb'))
@@ -224,7 +291,7 @@ xgb_model = pickle.load(open(filename, 'rb'))
 
 
 
-
+'''
 ########################### TESTING ###########################
 test_file_path = "5ebd3dd7c38c123b9ec6deba.wav"
 X,sr = librosa.load(test_file_path, sr = None)
@@ -255,3 +322,4 @@ print(y_chunk_model1)
 index = np.argmax(y_chunk_model1)
 print(index)
 print('Emotion:',emotions[index])
+'''
