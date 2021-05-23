@@ -9,7 +9,7 @@ from transformers import (
 
 
 # GPU 사용
-device = torch.device("cuda")
+device = torch.device("cpu")
 
 class ElectraClassificationHead(nn.Module):
   """Head for sentence-level classification tasks."""

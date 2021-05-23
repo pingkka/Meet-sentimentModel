@@ -28,7 +28,7 @@ print(tokenizer.tokenize(tokenizer.decode(enc["input_ids"])))
 
 
 # GPU 사용
-device = torch.device("cuda")
+device = torch.device("cpu")
 model = mymodel.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v1").to(device)
 
 
