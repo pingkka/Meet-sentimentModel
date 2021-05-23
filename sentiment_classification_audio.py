@@ -174,6 +174,7 @@ print(one_hot_encode)
 
 X_train,X_test,y_train,y_test = train_test_split(feature_all,one_hot_encode,test_size = 0.3,random_state=20)
 
+'''
 ########################### MODEL 1 ###########################
 model = Sequential()
 
@@ -259,8 +260,7 @@ for i in range(y22.shape[0]):
         count+=1
         
 print('Accuracy for model 2 : ' + str((count / y22.shape[0]) * 100))
-
-
+'''
 X_train2,X_test2,y_train2,y_test2 = train_test_split(feature_all,y,test_size = 0.3,random_state=20)
 eval_s = [(X_train2, y_train2),(X_test2,y_test2)]
 ########################### MODEL 3 ###########################
@@ -269,7 +269,7 @@ model3 = XGBClassifier()
 model3.fit(X_train2,y_train2, eval_set = eval_s)
 model3.evals_result()
 score = cross_val_score(model3, X_train2, y_train2, cv=5)
-y_pred3 = model3.predict(X_test)
+y_pred3 = model3.predict(X_test2)
 
 
 
