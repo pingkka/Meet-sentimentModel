@@ -19,7 +19,7 @@ max_fs = 0
 labels = []
 
 emotions = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
-label_max = 1200
+label_max = 2000
 label = 0
 
 path_data = ["4_wav", "5_wav"]
@@ -94,6 +94,7 @@ for a in range(0, len(file_name)) :
 
     f.close()
 
+
 #추가로 수집한 joy
 directories = os.listdir("result_joy")
 print(directories)
@@ -124,7 +125,7 @@ for a in directories:
 
 
 
-#추가로 수집한 joy
+#추가로 수집한 surprise
 directories = os.listdir("result_sur")
 print(directories)
 
@@ -152,6 +153,89 @@ for a in directories:
         features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
         feature_all = np.vstack([feature_all, features])
 
+#추가로 수집한 disgust
+directories = os.listdir("result_dis")
+print(directories)
+
+for a in directories:
+    labels.append(4)
+    file_path = "result_dis/" + a
+
+    X, sr = librosa.load(file_path, sr=None)
+    stft = np.abs(librosa.stft(X))
+
+    ############# EXTRACTING AUDIO FEATURES #############
+    mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40), axis=1)
+
+    chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T, axis=0)
+
+    mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T, axis=0)
+
+    contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr, fmin=0.5 * sr * 2 ** (-6)).T, axis=0)
+
+    tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sr * 2).T, axis=0)
+
+    if (i == 0):
+        feature_all = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
+    else:
+        features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
+        feature_all = np.vstack([feature_all, features])
+
+#추가로 수집한 none
+directories = os.listdir("result_non")
+print(directories)
+
+for a in directories:
+    labels.append(0)
+    file_path = "result_non/" + a
+
+    X, sr = librosa.load(file_path, sr=None)
+    stft = np.abs(librosa.stft(X))
+
+    ############# EXTRACTING AUDIO FEATURES #############
+    mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40), axis=1)
+
+    chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T, axis=0)
+
+    mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T, axis=0)
+
+    contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr, fmin=0.5 * sr * 2 ** (-6)).T, axis=0)
+
+    tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sr * 2).T, axis=0)
+
+    if (i == 0):
+        feature_all = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
+    else:
+        features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
+        feature_all = np.vstack([feature_all, features])
+
+#추가로 수집한 fear
+directories = os.listdir("result_fea")
+print(directories)
+
+for a in directories:
+    labels.append(6)
+    file_path = "result_fea/" + a
+
+    X, sr = librosa.load(file_path, sr=None)
+    stft = np.abs(librosa.stft(X))
+
+    ############# EXTRACTING AUDIO FEATURES #############
+    mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40), axis=1)
+
+    chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T, axis=0)
+
+    mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T, axis=0)
+
+    contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr, fmin=0.5 * sr * 2 ** (-6)).T, axis=0)
+
+    tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sr * 2).T, axis=0)
+
+    if (i == 0):
+        feature_all = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
+    else:
+        features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
+        feature_all = np.vstack([feature_all, features])
 
 for i in range(0, len(emotions)) :
     print(emotions[i] + " : " + str(labels.count(i)))
@@ -172,9 +256,9 @@ for i in range(len(f)):
 print(feature_all)
 print(one_hot_encode)
 
-X_train,X_test,y_train,y_test = train_test_split(feature_all,one_hot_encode,test_size = 0.3,random_state=20)
+X_train,X_test,y_train,y_test = train_test_split(feature_all,one_hot_encode,test_size = 0.3,shuffle=True, random_state=20)
 
-'''
+
 ########################### MODEL 1 ###########################
 model = Sequential()
 
@@ -203,9 +287,9 @@ model.fit(X_train,y_train, epochs=500, batch_size = 64,verbose=1)
 model.evaluate(X_test,y_test)
 
 mlp_model = model.to_json()
-with open('mlp_model_relu_adadelta_t.json','w') as j:
+with open('mlp_model_relu_adadelta.json','w') as j:
     j.write(mlp_model)
-model.save_weights("mlp_relu_adadelta_model_t.h5")
+model.save_weights("mlp_relu_adadelta_model.h5")
 
 y_pred_model1 = model.predict(X_test)
 y2 = np.argmax(y_pred_model1,axis=1)
@@ -245,9 +329,9 @@ model2.evaluate(X_test, y_test)
 
 
 mlp_model2 = model2.to_json()
-with open('mlp_model_tanh_adadelta_t.json','w') as j:
+with open('mlp_model_tanh_adadelta.json','w') as j:
     j.write(mlp_model2)
-model2.save_weights("mlp_tanh_adadelta_model_t.h5")
+model2.save_weights("mlp_tanh_adadelta_model.h5")
 
 
 y_pred_model2 = model2.predict(X_test)
@@ -260,7 +344,7 @@ for i in range(y22.shape[0]):
         count+=1
         
 print('Accuracy for model 2 : ' + str((count / y22.shape[0]) * 100))
-'''
+
 X_train2,X_test2,y_train2,y_test2 = train_test_split(feature_all,y,test_size = 0.3,random_state=20)
 eval_s = [(X_train2, y_train2),(X_test2,y_test2)]
 ########################### MODEL 3 ###########################
@@ -281,7 +365,7 @@ for i in range(y_pred3.shape[0]):
 print('Accuracy for model 3 : ' + str((count / y_pred3.shape[0]) * 100))
 
 # 파일명
-filename = 'xgb_model_t.model'
+filename = 'xgb_model.model'
 
 # 모델 저장
 pickle.dump(model3, open(filename, 'wb'))

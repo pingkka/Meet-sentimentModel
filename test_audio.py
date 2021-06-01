@@ -29,7 +29,7 @@ loaded_model = pickle.load(open(filename, 'rb'))
 
 
 ########################### TESTING ###########################
-test_file_path = "AnyConv.com__a1.wav"
+test_file_path = "test4.wav"
 X,sr = librosa.load(test_file_path, sr = None)
 stft = np.abs(librosa.stft(X))
 
