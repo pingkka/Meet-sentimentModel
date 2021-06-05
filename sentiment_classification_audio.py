@@ -19,7 +19,7 @@ max_fs = 0
 labels = []
 
 emotions = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
-label_max = 2000
+label_max = 350
 label = 0
 
 path_data = ["4_wav", "5_wav"]
@@ -94,14 +94,15 @@ for a in range(0, len(file_name)) :
 
     f.close()
 
+'''
 
 #추가로 수집한 joy
-directories = os.listdir("result_joy")
+directories = os.listdir("joy_wav")
 print(directories)
 
 for a in directories:
     labels.append(1)
-    file_path = "result_joy/" + a
+    file_path = "joy_wav/" + a
 
     X, sr = librosa.load(file_path, sr=None)
     stft = np.abs(librosa.stft(X))
@@ -126,12 +127,12 @@ for a in directories:
 
 
 #추가로 수집한 surprise
-directories = os.listdir("result_sur")
+directories = os.listdir("sur_wav")
 print(directories)
 
 for a in directories:
     labels.append(5)
-    file_path = "result_sur/" + a
+    file_path = "sur_wav/" + a
 
     X, sr = librosa.load(file_path, sr=None)
     stft = np.abs(librosa.stft(X))
@@ -152,7 +153,8 @@ for a in directories:
     else:
         features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
         feature_all = np.vstack([feature_all, features])
-
+'''
+'''
 #추가로 수집한 disgust
 directories = os.listdir("result_dis")
 print(directories)
@@ -236,6 +238,7 @@ for a in directories:
     else:
         features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
         feature_all = np.vstack([feature_all, features])
+'''
 
 for i in range(0, len(emotions)) :
     print(emotions[i] + " : " + str(labels.count(i)))
@@ -265,15 +268,15 @@ model = Sequential()
 #model.add(Dense(X_train.shape[1],input_dim =X_train.shape[1],init='normal',activation ='relu'))
 model.add(Dense(X_train.shape[1],input_dim =X_train.shape[1], activation ='relu'))
 
-model.add(Dense(64,activation ='relu'))
+model.add(Dense(400,activation ='relu'))
 
 model.add(Dropout(0.2))
 
-model.add(Dense(64,activation ='relu'))
+model.add(Dense(200,activation ='relu'))
 
 model.add(Dropout(0.2))
 
-model.add(Dense(64,activation ='relu'))
+model.add(Dense(100,activation ='relu'))
 
 model.add(Dropout(0.2))
 print("y_trainshape" + str(y_train.shape[1]))
@@ -285,6 +288,7 @@ model.fit(X_train,y_train, epochs=500, batch_size = 64,verbose=1)
 
 
 model.evaluate(X_test,y_test)
+model.summary()
 
 mlp_model = model.to_json()
 with open('mlp_model_relu_adadelta.json','w') as j:
@@ -307,15 +311,15 @@ model2 = Sequential()
 
 model2.add(Dense(X_train.shape[1],input_dim =X_train.shape[1],activation ='relu'))
 
-model2.add(Dense(64,activation ='tanh'))
+model2.add(Dense(400,activation ='tanh'))
 
 model2.add(Dropout(0.2))
 
-model2.add(Dense(64,activation ='tanh'))
+model2.add(Dense(200,activation ='tanh'))
 
 model2.add(Dropout(0.2))
 
-model2.add(Dense(64,activation ='sigmoid'))
+model2.add(Dense(100,activation ='sigmoid'))
 
 model2.add(Dropout(0.2))
 
@@ -323,7 +327,7 @@ model2.add(Dense(y_train.shape[1],activation ='softmax'))
 
 model2.compile(loss = 'categorical_crossentropy',optimizer='adadelta',metrics=['accuracy'])
 
-model2.fit(X_train,y_train,epochs=500,batch_size = 100,verbose=1)
+model2.fit(X_train,y_train,epochs=500,batch_size = 64,verbose=1)
 
 model2.evaluate(X_test, y_test)
 
@@ -344,6 +348,7 @@ for i in range(y22.shape[0]):
         count+=1
         
 print('Accuracy for model 2 : ' + str((count / y22.shape[0]) * 100))
+model2.summary()
 
 X_train2,X_test2,y_train2,y_test2 = train_test_split(feature_all,y,test_size = 0.3,random_state=20)
 eval_s = [(X_train2, y_train2),(X_test2,y_test2)]

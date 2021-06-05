@@ -9,10 +9,10 @@ import numpy as np
 labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
 none_words = ["안싫", "안 싫", "안무서", "안놀람", "안놀랐", "안행복", "안기뻐", "안빡","안우울", "안짜증", "안깜짝", "안무섭"]
 pass_words = ["안좋", "안 좋"]
-senti_loss = [5.0, 4.0, 6.5, 6.5, 9.0, 8.0]
+senti_loss = [6.0, 4.0, 6.5, 6.5, 10.0, 9.0]
 
 tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
-text = ""
+text = "슬프다"
 enc = tokenizer.encode_plus(text)
 inputs = tokenizer(
   text,

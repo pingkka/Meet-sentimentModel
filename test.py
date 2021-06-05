@@ -13,7 +13,7 @@ labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
 
 
 #Audio Sentiment Analysis Model
-filename = 'xgb_model_ori.model'
+filename = 'xgb_model.model'
 # 모델 불러오기
 loaded_model = pickle.load(open(filename, 'rb'))
 
@@ -28,10 +28,10 @@ loaded_model = model_from_json(loaded_model_json)
 
 none_words = ["안싫", "안 싫", "안무서", "안놀람", "안놀랐", "안행복", "안기뻐", "안빡","안우울", "안짜증", "안깜짝", "안무섭"]
 pass_words = ["안좋", "안 좋"]
-senti_loss = [5.0, 4.0, 6.5, 6.5, 9.0, 8.0]
+senti_loss = [6.0, 4.0, 6.5, 6.5, 10.0, 9.0]
 
 tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
-text = "개좋은데 미쳤는데"
+text = "아 진짜 너무하기 싫은데 어떡하지"
 enc = tokenizer.encode_plus(text)
 inputs = tokenizer(
   text,
@@ -53,7 +53,7 @@ model = mymodel.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v
 
 
 ########################### TESTING ###########################
-test_file_path = "test1.wav"
+test_file_path = "test12.wav"
 X,sr = librosa.load(test_file_path, sr = None)
 stft = np.abs(librosa.stft(X))
 
@@ -169,7 +169,7 @@ else :
   total_score = []
   for i in range(0, len(label_loss)):
     text_score.append(label_loss[i]/(sum(label_loss)+10))
-    audio_score.append(y_chunk_model1_proba[0][i+1] - 0.3)
+    audio_score.append(y_chunk_model1_proba[0][i+1] - 0.35)
 
 
   for i in range(0, len(audio_score)):

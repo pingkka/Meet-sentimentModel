@@ -36,7 +36,7 @@ class audioClassification():
     def classify(self, audio_path, text):
 
         ########################### TESTING ###########################
-        #test_file_path = "5_wav/5f05fb0bb140144dfcff0184.wav"
+        # test_file_path = "5_wav/5f05fb0bb140144dfcff0184.wav"
         X, sr = librosa.load(audio_path, sr=None)
         stft = np.abs(librosa.stft(X))
 
@@ -55,30 +55,44 @@ class audioClassification():
 
         x_chunk = np.array(features)
         x_chunk = x_chunk.reshape(1, np.shape(x_chunk)[0])
-        #y_chunk_model1 = self.loaded_model.predict(x_chunk)
+        # y_chunk_model1 = self.loaded_model.predict(x_chunk)
         y_chunk_model1_proba = self.loaded_model.predict_proba(x_chunk)
         index = np.argmax(y_chunk_model1_proba)
 
+        '''
         print("-----<Accuracy>------")
         for proba in range(0, len(y_chunk_model1_proba[0])):
             print(self.labels[proba] + " : " + str(y_chunk_model1_proba[0][proba]))
 
         print('\nEmotion:', self.labels[int(index)])
         print("--------------------")
+        '''
+
+        # enc = tokenizer.encode_plus(text)
+        inputs = self.tokenizer(
+            text,
+            return_tensors='pt',
+            truncation=True,
+            max_length=256,
+            pad_to_max_length=True,
+            add_special_tokens=True
+        )
+
+        # print(tokenizer.tokenize(tokenizer.decode(enc["input_ids"])))
 
         self.model.eval()
 
-        input_ids = self.inputs['input_ids'].to(self.device)
-        attention_mask = self.inputs['attention_mask'].to(self.device)
+        input_ids = inputs['input_ids'].to(self.device)
+        attention_mask = inputs['attention_mask'].to(self.device)
         output = self.model(input_ids.to(self.device), attention_mask.to(self.device))[0]
         _, prediction = torch.max(output, 1)
 
         label_loss_str = str(output).split(",")
 
         label_loss = [float(x.strip().replace(']', '')) for x in label_loss_str[1:7]]
-        print(sum(label_loss))
 
-        print(f'Review text : {text}')
+
+        #print(f'Review text : {text}')
 
         pre_result = int(re.findall("\d+", str(prediction))[0])
 
@@ -96,15 +110,16 @@ class audioClassification():
                 label_loss[pre_result - 1] = 0
                 result = label_loss.index(max(label_loss)) + 1
 
-        print(f'Sentiment : {self.labels[result]}')
-
+        #print(f'Sentiment : {self.labels[result]}')
+        '''
         print("\n<감정 별 손실 함수 값>")
         for i in range(0, 6):
             print(self.labels[i + 1], ":", label_loss[i])
+        '''
 
         if (index == 0):
             total_result = -1
-        else :
+        else:
             text_score = []
             audio_score = []
             total_score = []
@@ -114,11 +129,9 @@ class audioClassification():
 
             for i in range(0, len(audio_score)):
                 total_score.append(float(audio_score[i]) + float(text_score[i]))
-            print(total_score)
+            #print(total_score)
 
             total_result = total_score.index(max(total_score))
 
-
-
-        print("Result : ", self.labels[total_result + 1])
-        return self.labels[total_result+1]
+        #print("Result : ", self.labels[total_result + 1])
+        return self.labels[total_result + 1]
