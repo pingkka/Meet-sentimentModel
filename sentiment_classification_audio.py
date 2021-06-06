@@ -19,7 +19,7 @@ max_fs = 0
 labels = []
 
 emotions = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
-label_max = 350
+label_max = 850
 label = 0
 
 path_data = ["4_wav", "5_wav"]
@@ -94,7 +94,7 @@ for a in range(0, len(file_name)) :
 
     f.close()
 
-'''
+
 
 #추가로 수집한 joy
 directories = os.listdir("joy_wav")
@@ -153,7 +153,7 @@ for a in directories:
     else:
         features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
         feature_all = np.vstack([feature_all, features])
-'''
+
 '''
 #추가로 수집한 disgust
 directories = os.listdir("result_dis")

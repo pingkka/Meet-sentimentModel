@@ -47,15 +47,15 @@ class HwangariDataset(Dataset):
         return input_ids, attention_mask, y
 
 
-train_dataset = HwangariDataset("traindata.csv")
-test_dataset = HwangariDataset("testdata.csv")
+train_dataset = HwangariDataset("traindata25000.csv")
+test_dataset = HwangariDataset("testdata25000.csv")
 
 # GPU 사용
 device = torch.device("cuda")
 
 model = mymodel.HwangariSentimentModel.from_pretrained("monologg/koelectra-base-v3-discriminator").to(device)
 
-epochs = 30
+epochs = 20
 batch_size = 64
 
 # 모델 레이어 보기
