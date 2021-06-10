@@ -31,7 +31,7 @@ class audioClassification():
         self.device = torch.device("cuda")
         
         #텍스트 모델 불러오기
-        self.model = mymodel.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v1").to(self.device)
+        self.model = mymodel.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v2").to(self.device)
 
     def classify(self, audio_path, text):
 
@@ -59,14 +59,14 @@ class audioClassification():
         y_chunk_model1_proba = self.loaded_model.predict_proba(x_chunk)
         index = np.argmax(y_chunk_model1_proba)
 
-        '''
+
         print("-----<Accuracy>------")
         for proba in range(0, len(y_chunk_model1_proba[0])):
             print(self.labels[proba] + " : " + str(y_chunk_model1_proba[0][proba]))
 
         print('\nEmotion:', self.labels[int(index)])
         print("--------------------")
-        '''
+
 
         # enc = tokenizer.encode_plus(text)
         inputs = self.tokenizer(
@@ -92,7 +92,7 @@ class audioClassification():
         label_loss = [float(x.strip().replace(']', '')) for x in label_loss_str[1:7]]
 
 
-        #print(f'Review text : {text}')
+        print(f'Review text : {text}')
 
         pre_result = int(re.findall("\d+", str(prediction))[0])
 
@@ -110,28 +110,31 @@ class audioClassification():
                 label_loss[pre_result - 1] = 0
                 result = label_loss.index(max(label_loss)) + 1
 
-        #print(f'Sentiment : {self.labels[result]}')
-        '''
+        print(f'Sentiment : {self.labels[result]}')
+
         print("\n<감정 별 손실 함수 값>")
         for i in range(0, 6):
             print(self.labels[i + 1], ":", label_loss[i])
-        '''
 
         if (index == 0):
+            print("b")
             total_result = -1
+        elif (index == result):
+            print("a")
+            total_result = result
+
         else:
             text_score = []
             audio_score = []
             total_score = []
             for i in range(0, len(label_loss)):
                 text_score.append(label_loss[i] / (sum(label_loss) + 10))
-                audio_score.append(y_chunk_model1_proba[0][i + 1] - 0.4)
+                audio_score.append(y_chunk_model1_proba[0][i + 1] - 0.35)
 
             for i in range(0, len(audio_score)):
                 total_score.append(float(audio_score[i]) + float(text_score[i]))
-            #print(total_score)
+            print(total_score)
 
             total_result = total_score.index(max(total_score))
-
-        #print("Result : ", self.labels[total_result + 1])
+        print("Result : ", self.labels[total_result + 1])
         return self.labels[total_result + 1]
