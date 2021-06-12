@@ -19,7 +19,7 @@ max_fs = 0
 labels = []
 
 emotions = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
-label_max = 1200
+label_max = 1900
 label = 0
 
 path_data = ["4_wav", "5_wav"]
@@ -370,7 +370,7 @@ for i in range(y_pred3.shape[0]):
 print('Accuracy for model 3 : ' + str((count / y_pred3.shape[0]) * 100))
 
 # 파일명
-filename = 'xgb_model3.model'
+filename = 'audio_model/xgb_model1900.model'
 
 # 모델 저장
 pickle.dump(model3, open(filename, 'wb'))
