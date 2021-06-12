@@ -1,3 +1,9 @@
+
+########################################################
+#기존 KOELECTRA pretrained model에 은닉층 추가 후 분류
+#(기존 KODELECTRA 모델은 감정을 긍정/부정으로만 분류함)
+########################################################
+
 import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss, MSELoss
@@ -9,7 +15,7 @@ from transformers import (
 
 
 # GPU 사용
-device = torch.device("cpu")
+device = torch.device("cuda")
 
 class ElectraClassificationHead(nn.Module):
   """Head for sentence-level classification tasks."""

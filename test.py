@@ -13,7 +13,7 @@ labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
 
 
 #Audio Sentiment Analysis Model
-filename = 'xgb_model.model'
+filename = 'audio_model/xgb_model.model'
 # 모델 불러오기
 loaded_model = pickle.load(open(filename, 'rb'))
 

@@ -20,7 +20,7 @@ json_file.close()
 loaded_model = model_from_json(loaded_model_json)
 '''
 # 파일명
-filename = 'xgb_model.model'
+filename = 'audio_model/xgb_model.model'
 
 # 모델 불러오기
 loaded_model = pickle.load(open(filename, 'rb'))

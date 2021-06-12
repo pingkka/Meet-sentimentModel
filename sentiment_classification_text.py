@@ -47,8 +47,8 @@ class HwangariDataset(Dataset):
         return input_ids, attention_mask, y
 
 
-train_dataset = HwangariDataset("traindata25000.csv")
-test_dataset = HwangariDataset("testdata25000.csv")
+train_dataset = HwangariDataset("traindata43000.csv")
+test_dataset = HwangariDataset("testdata43000.csv")
 
 # GPU 사용
 device = torch.device("cuda")
