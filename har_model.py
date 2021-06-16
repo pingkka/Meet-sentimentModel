@@ -1,6 +1,6 @@
 
 ########################################################
-#기존 KOELECTRA pretrained model에 은닉층 추가 후 분류
+#기존 KOELECTRA pretrained model에 은닉층 추가 후 분류하는 코드 (7가지의 감정으로 분류)
 #(기존 KODELECTRA 모델은 감정을 긍정/부정으로만 분류함)
 ########################################################
 
@@ -38,7 +38,7 @@ class ElectraClassificationHead(nn.Module):
 class HwangariSentimentModel(ElectraPreTrainedModel):
   def __init__(self, config):
     super().__init__(config)
-    self.num_labels = 7
+    self.num_labels = 7 #7개로 분류
     self.electra = ElectraModel(config).to(device)
     self.classifier = ElectraClassificationHead(config, 7).to(device)
     self.dropout = nn.Dropout(config.hidden_dropout_prob).to(device)

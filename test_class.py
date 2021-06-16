@@ -1,3 +1,7 @@
+########################################################
+#텍스트와 음성 모두 예측하는 코드
+########################################################
+
 import pickle
 import re
 
@@ -6,7 +10,7 @@ import numpy as np
 import torch
 from transformers import AutoTokenizer
 
-import mymodel
+import har_model
 
 
 class LanoiceClassification():
@@ -28,7 +32,7 @@ class LanoiceClassification():
         self.device = torch.device("cpu")
 
         # 텍스트 모델 불러오기
-        self.model = mymodel.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v2").to(self.device)
+        self.model = har_model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v2").to(self.device)
 
     def classify(self, audio_path, text):
 
