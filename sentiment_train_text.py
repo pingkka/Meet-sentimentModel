@@ -1,10 +1,15 @@
+########################################################
+#텍스트 모델 훈련
+########################################################
+
+
 import pandas as pd
 import torch
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer, ElectraForSequenceClassification, AdamW
 from tqdm.notebook import tqdm
-import mymodel
+import har_model
 import matplotlib.pyplot as plt
 import matplotlib
 import re
@@ -47,13 +52,14 @@ class HwangariDataset(Dataset):
         return input_ids, attention_mask, y
 
 
+#트위터 크롤링 후 라벨링한 csv 파일 (저작권 문제로 github에는 업로드 하지 않음)
 train_dataset = HwangariDataset("traindata43000.csv")
 test_dataset = HwangariDataset("testdata43000.csv")
 
 # GPU 사용
 device = torch.device("cuda")
 
-model = mymodel.HwangariSentimentModel.from_pretrained("monologg/koelectra-base-v3-discriminator").to(device)
+model = har_model.HwangariSentimentModel.from_pretrained("monologg/koelectra-base-v3-discriminator").to(device)
 
 epochs = 20
 batch_size = 64
@@ -76,6 +82,7 @@ for i in range(epochs):
 
     model.train()
 
+    #Train
     for input_ids_batch, attention_masks_batch, y_batch in tqdm(train_loader):
         optimizer.zero_grad()
         y_batch = y_batch.to(device)
@@ -108,6 +115,7 @@ model.eval()
 test_correct = 0
 test_total = 0
 
+#Test
 for input_ids_batch, attention_masks_batch, y_batch in tqdm(test_loader):
     y_batch = y_batch.to(device)
     y_pred = model(input_ids_batch.to(device), attention_mask=attention_masks_batch.to(device))[0]
@@ -117,16 +125,18 @@ for input_ids_batch, attention_masks_batch, y_batch in tqdm(test_loader):
 
 print("Accuracy:", test_correct.float() / test_total)
 
-# 모델 저장하기
+#모델 파일로 저장하기
 # torch.save(model.state_dict(), "real_model.pt")
 
+#Hugging face에 업로드할 파일 저장
 model.save_pretrained("haremotions-v3")
 
-
+#epoch마다 저장된 정확도 값을 일반 배열로 변환 (기존엔 torch 배열이었음))
 accuracies_float = []
 for accuracy in accuracies:
     accuracies_float.append(float(re.findall(r"[-+]?\d*\.\d+|\d+", str(accuracy))[0]))
 
+######## 정확도 그래프 생성 ##########
 # 도화지 생성
 fig = plt.figure()
 # 정확도 그래프 그리기

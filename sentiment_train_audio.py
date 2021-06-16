@@ -1,3 +1,8 @@
+########################################################
+#음성 모델 훈련
+########################################################
+
+
 import numpy as np
 import os
 import librosa
@@ -27,12 +32,13 @@ file_name = ['audio_sentiment.csv', 'audio_sentiment5.csv']
 
 
 def most_common_top_1(candidates):
-    """후보자 중 가장 많은 득표자를 뽑는다(단, 동점발생 시 리스트 왼쪽을 우선한다)"""
+    #배열에서 가장 많이 나온 값 출력 (동점일 시 더 앞에 있는 index로 출력함)
     assert isinstance(candidates, list), 'Must be a list type'
     if len(candidates) == 0: return None
     return Counter(candidates).most_common(n=1)[0][0]
 
 
+#ai hub에서 받아온 데이터가 담긴 디렉토리의 음성 파일들을 가져와 특징 데이터 추출 (저작권 문제로 데이터셋은 github에 업로드 하지 않음)
 i = 0
 feature_all = np.array([])
 for a in range(0, len(file_name)) :
@@ -42,7 +48,7 @@ for a in range(0, len(file_name)) :
     f = open(file_name[a],'r',encoding='utf-8-sig')
     rdr = csv.reader(f)
 
-
+    #음성 데이터셋의 감정을 분류한 csv 파일을 읽어 가장 많이 투표된 감정으로 라벨링 (5명이 각자 음성에 맞는 데이터를 기록한 파일임)
     for line in rdr:
         if (line[0] + ".wav") not in directories: continue
         print(line[0])
@@ -70,9 +76,11 @@ for a in range(0, len(file_name)) :
         else : labels.append(label)
 
 
+
+
         stft = np.abs(librosa.stft(X))
 
-        ############# EXTRACTING AUDIO FEATURES #############
+        ############# EXTRACTING AUDIO FEATURES (음성 특징 데이터 추출) #############
         mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40),axis=1)
 
         chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T,axis=0)
@@ -153,32 +161,29 @@ for a in directories:
         feature_all = np.vstack([feature_all, features])
 
 
+#감정 별 데이터 개수 출력
 for i in range(0, len(emotions)) :
     print(emotions[i] + " : " + str(labels.count(i)))
 
 
+
+#라벨 값 저장
 from copy import deepcopy
 y = deepcopy(labels)
 for i in range(len(y)):
     y[i] = int(y[i])
 
 
-n_labels = len(y)
-n_unique_labels = len(np.unique(y))
-one_hot_encode = np.zeros((n_labels,n_unique_labels))
-f = np.arange(n_labels)
-for i in range(len(f)):
-    one_hot_encode[f[i],y[i]-1]=1
-print(feature_all)
-print(one_hot_encode)
-
 #X_train,X_test,y_train,y_test = train_test_split(feature_all,one_hot_encode,test_size = 0.3,shuffle=True, random_state=20)
 
+#데이터셋 split
 X_train2,X_test2,y_train2,y_test2 = train_test_split(feature_all,y,test_size = 0.3,shuffle=True, random_state=30)
 eval_s = [(X_train2, y_train2),(X_test2,y_test2)]
-########################### MODEL 3 ###########################
 
-model3 = XGBClassifier(n_estimators=500, learning_rate=0.1, max_depth=4)
+
+########################### MODEL  ###########################
+
+model3 = XGBClassifier(n_estimators=300, learning_rate=0.1, max_depth=4)
 model3.fit(X_train2,y_train2, eval_set = eval_s)
 model3.evals_result()
 score = cross_val_score(model3, X_train2, y_train2, cv=5)
@@ -192,56 +197,6 @@ for i in range(y_pred3.shape[0]):
 
 print('Accuracy for model 3 : ' + str((count / y_pred3.shape[0]) * 100))
 
-# 파일명
-filename = 'audio_model/xgb_model5004.model'
 
-# 모델 저장
-pickle.dump(model3, open(filename, 'wb'))
-
-model4 = XGBClassifier(n_estimators=500, learning_rate=0.1, max_depth=8)
-model4.fit(X_train2, y_train2, eval_set=eval_s)
-model4.evals_result()
-score = cross_val_score(model4, X_train2, y_train2, cv=5)
-y_pred4 = model4.predict(X_test2)
-
-count = 0
-for i in range(y_pred4.shape[0]):
-    if y_pred4[i] == y_test2[i]:
-        count += 1
-
-print('Accuracy for model 3 : ' + str((count / y_pred4.shape[0]) * 100))
-
-# 파일명
-filename = 'audio_model/xgb_model5008.model'
-
-# 모델 저장
-pickle.dump(model4, open(filename, 'wb'))
-
-
-
-# 파일명
-filename = 'audio_model/xgb_model5004.model'
-
-# 모델 저장
-pickle.dump(model3, open(filename, 'wb'))
-
-model5 = XGBClassifier(n_estimators=300, learning_rate=0.1, max_depth=4)
-model5.fit(X_train2, y_train2, eval_set=eval_s)
-model5.evals_result()
-score = cross_val_score(model5, X_train2, y_train2, cv=5)
-y_pred5 = model5.predict(X_test2)
-
-count = 0
-for i in range(y_pred5.shape[0]):
-    if y_pred5[i] == y_test2[i]:
-        count += 1
-
-print('Accuracy for model 3 : ' + str((count / y_pred5.shape[0]) * 100))
-
-# 파일명
-filename = 'audio_model/xgb_model3004.model'
-
-# 모델 저장
-pickle.dump(model5, open(filename, 'wb'))
 
 
