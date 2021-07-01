@@ -6,5 +6,6 @@
     <mapping directory="$PROJECT_DIR$/haremotions-audio-v1" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/haremotions-v1" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/haremotions-v2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/haremotions-v3" vcs="Git" />
   </component>
 </project>
