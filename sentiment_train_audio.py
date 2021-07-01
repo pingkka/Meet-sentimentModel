@@ -12,6 +12,8 @@ import pickle
 from xgboost import XGBClassifier
 import csv
 from collections import Counter
+from keras.models import Sequential
+from keras.layers import Dense, Activation, Dropout, Flatten, Embedding
 
 
 mslen = 22050
@@ -22,7 +24,7 @@ max_fs = 0
 labels = []
 
 emotions = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
-label_max = 1900
+label_max = 16000
 label = 0
 
 path_data = ["4_wav", "5_wav"]
@@ -101,7 +103,7 @@ for a in range(0, len(file_name)) :
     f.close()
 
 
-
+'''
 #추가로 수집한 joy
 directories = os.listdir("joy_wav")
 print(directories)
@@ -160,7 +162,7 @@ for a in directories:
         features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
         feature_all = np.vstack([feature_all, features])
 
-
+'''
 #감정 별 데이터 개수 출력
 for i in range(0, len(emotions)) :
     print(emotions[i] + " : " + str(labels.count(i)))
@@ -174,7 +176,62 @@ for i in range(len(y)):
     y[i] = int(y[i])
 
 
-#X_train,X_test,y_train,y_test = train_test_split(feature_all,one_hot_encode,test_size = 0.3,shuffle=True, random_state=20)
+
+
+n_labels = len(y)
+n_unique_labels = len(np.unique(y))
+one_hot_encode = np.zeros((n_labels, n_unique_labels))
+f = np.arange(n_labels)
+for i in range(len(f)):
+    one_hot_encode[f[i], y[i] - 1] = 1
+print(feature_all)
+print(one_hot_encode)
+
+X_train, X_test, y_train, y_test = train_test_split(feature_all, one_hot_encode, test_size=0.3, shuffle=True,
+                                                    random_state=20)
+
+########################### MODEL 1 ###########################
+model = Sequential()
+
+#model.add(Dense(X_train.shape[1],input_dim =X_train.shape[1],init='normal',activation ='relu'))
+model.add(Dense(X_train.shape[1],input_dim =X_train.shape[1], activation ='relu'))
+
+model.add(Dense(400,activation ='relu'))
+
+model.add(Dropout(0.2))
+
+model.add(Dense(200,activation ='relu'))
+
+model.add(Dropout(0.2))
+model.add(Dense(100,activation ='relu'))
+
+model.add(Dropout(0.2))
+print("y_trainshape" + str(y_train.shape[1]))
+model.add(Dense(y_train.shape[1],activation ='softmax'))
+
+model.compile(loss = 'categorical_crossentropy',optimizer='adadelta',metrics=['accuracy'])
+
+model.fit(X_train,y_train, epochs=100, batch_size = 16,verbose=1)
+
+
+model.evaluate(X_test,y_test)
+model.summary()
+
+mlp_model = model.to_json()
+with open('mlp_model_relu_adadelta_original.json','w') as j:
+    j.write(mlp_model)
+model.save_weights("mlp_relu_adadelta_model_original.h5")
+
+y_pred_model1 = model.predict(X_test)
+y2 = np.argmax(y_pred_model1,axis=1)
+y_test2 = np.argmax(y_test , axis = 1)
+
+count = 0
+for i in range(y2.shape[0]):
+    if y2[i] == y_test2[i]:
+        count+=1
+
+print('Accuracy for model 1 : ' + str((count / y2.shape[0]) * 100))
 
 #데이터셋 split
 X_train2,X_test2,y_train2,y_test2 = train_test_split(feature_all,y,test_size = 0.3,shuffle=True, random_state=30)
@@ -183,7 +240,7 @@ eval_s = [(X_train2, y_train2),(X_test2,y_test2)]
 
 ########################### MODEL  ###########################
 
-model3 = XGBClassifier(n_estimators=300, learning_rate=0.1, max_depth=4)
+model3 = XGBClassifier(n_estimators=100, learning_rate=0.1, max_depth=3)
 model3.fit(X_train2,y_train2, eval_set = eval_s)
 model3.evals_result()
 score = cross_val_score(model3, X_train2, y_train2, cv=5)
@@ -196,6 +253,13 @@ for i in range(y_pred3.shape[0]):
         count+=1
 
 print('Accuracy for model 3 : ' + str((count / y_pred3.shape[0]) * 100))
+
+
+# 파일명
+filename = 'audio_model/xgb_model_original.model'
+
+# 모델 저장
+pickle.dump(model3, open(filename, 'wb'))
 
 
 
