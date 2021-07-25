@@ -2,10 +2,9 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Meet-sentimentModel" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/haremotions-audio-v1" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/haremotions-v1" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/haremotions-v2" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/haremotions-v3" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/haremotions_audio_v1" vcs="Git" />
   </component>
 </project>

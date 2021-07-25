@@ -6,8 +6,9 @@
 
 import torch
 import torch.nn as nn
+import har_model_head
 from torch.nn import CrossEntropyLoss, MSELoss
-from transformers.activations import get_activation
+
 from transformers import (
   ElectraPreTrainedModel,
   ElectraModel
@@ -17,30 +18,14 @@ from transformers import (
 # GPU 사용
 device = torch.device("cuda")
 
-class ElectraClassificationHead(nn.Module):
-  """Head for sentence-level classification tasks."""
 
-  def __init__(self, config, num_labels):
-    super().__init__()
-    self.dense = nn.Linear(config.hidden_size, 4*config.hidden_size)
-    self.dropout = nn.Dropout(config.hidden_dropout_prob)
-    self.out_proj = nn.Linear(4*config.hidden_size,num_labels)
-
-  def forward(self, features, **kwargs):
-    x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
-    x = self.dropout(x)
-    x = self.dense(x)
-    x = get_activation("gelu")(x)  # although BERT uses tanh here, it seems Electra authors used gelu here
-    x = self.dropout(x)
-    x = self.out_proj(x)
-    return x
 
 class HwangariSentimentModel(ElectraPreTrainedModel):
   def __init__(self, config):
     super().__init__(config)
     self.num_labels = 7 #7개로 분류
     self.electra = ElectraModel(config).to(device)
-    self.classifier = ElectraClassificationHead(config, 7).to(device)
+    self.classifier = har_model_head.ElectraClassificationHead(config, 7).to(device)
     self.dropout = nn.Dropout(config.hidden_dropout_prob).to(device)
 
     self.init_weights()

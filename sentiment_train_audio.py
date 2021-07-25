@@ -24,15 +24,17 @@ max_fs = 0
 labels = []
 
 emotions = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
-label_max = 16000
+label_max = 1901
 label = 0
 
 path_data = ["4_wav", "5_wav"]
+path_data_2 = ["6_man_wav", "6_woman_wav"]
 file_name = ['audio_sentiment.csv', 'audio_sentiment5.csv']
+file_name_2 = 'audio_sentiment6.csv'
 
-#file_name = ['audio_sentiment_test.csv']
-
-
+##########################################################################################
+#음성 데이터셋 -> 특징 데이터 추출
+##########################################################################################
 def most_common_top_1(candidates):
     #배열에서 가장 많이 나온 값 출력 (동점일 시 더 앞에 있는 index로 출력함)
     assert isinstance(candidates, list), 'Must be a list type'
@@ -40,7 +42,7 @@ def most_common_top_1(candidates):
     return Counter(candidates).most_common(n=1)[0][0]
 
 
-#ai hub에서 받아온 데이터가 담긴 디렉토리의 음성 파일들을 가져와 특징 데이터 추출 (저작권 문제로 데이터셋은 github에 업로드 하지 않음)
+#ai hub - KETI 감성 대화 (github 업로드 x)
 i = 0
 feature_all = np.array([])
 for a in range(0, len(file_name)) :
@@ -102,67 +104,120 @@ for a in range(0, len(file_name)) :
 
     f.close()
 
+#모두의 말뭉치 - 감성 대화 음성 (github 업로드 x)
+if(labels.count(1) <= label_max):
+    #추가로 수집한 joy
+    directories = os.listdir("joy_wav")
+    print(directories)
 
-'''
-#추가로 수집한 joy
-directories = os.listdir("joy_wav")
-print(directories)
+    for a in directories:
+        labels.append(1)
+        file_path = "joy_wav/" + a
 
-for a in directories:
-    labels.append(1)
-    file_path = "joy_wav/" + a
+        X, sr = librosa.load(file_path, sr=None)
+        stft = np.abs(librosa.stft(X))
 
-    X, sr = librosa.load(file_path, sr=None)
-    stft = np.abs(librosa.stft(X))
+        ############# EXTRACTING AUDIO FEATURES #############
+        mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40), axis=1)
 
-    ############# EXTRACTING AUDIO FEATURES #############
-    mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40), axis=1)
+        chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T, axis=0)
 
-    chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T, axis=0)
+        mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T, axis=0)
 
-    mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T, axis=0)
+        contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr, fmin=0.5 * sr * 2 ** (-6)).T, axis=0)
 
-    contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr, fmin=0.5 * sr * 2 ** (-6)).T, axis=0)
+        tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sr * 2).T, axis=0)
 
-    tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sr * 2).T, axis=0)
-
-    if (i == 0):
-        feature_all = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
-    else:
-        features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
-        feature_all = np.vstack([feature_all, features])
+        if (i == 0):
+            feature_all = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
+        else:
+            features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
+            feature_all = np.vstack([feature_all, features])
+        i+=1
 
 
+if(labels.count(5) <= label_max):
+    #추가로 수집한 surprise
+    directories = os.listdir("sur_wav")
+    print(directories)
 
-#추가로 수집한 surprise
-directories = os.listdir("sur_wav")
-print(directories)
+    for a in directories:
+        labels.append(5)
+        file_path = "sur_wav/" + a
 
-for a in directories:
-    labels.append(5)
-    file_path = "sur_wav/" + a
+        X, sr = librosa.load(file_path, sr=None)
+        stft = np.abs(librosa.stft(X))
 
-    X, sr = librosa.load(file_path, sr=None)
-    stft = np.abs(librosa.stft(X))
+        ############# EXTRACTING AUDIO FEATURES #############
+        mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40), axis=1)
 
-    ############# EXTRACTING AUDIO FEATURES #############
-    mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40), axis=1)
+        chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T, axis=0)
 
-    chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T, axis=0)
+        mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T, axis=0)
 
-    mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T, axis=0)
+        contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr, fmin=0.5 * sr * 2 ** (-6)).T, axis=0)
 
-    contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr, fmin=0.5 * sr * 2 ** (-6)).T, axis=0)
+        tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sr * 2).T, axis=0)
 
-    tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sr * 2).T, axis=0)
+        if (i == 0):
+            feature_all = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
+        else:
+            features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
+            feature_all = np.vstack([feature_all, features])
+        i+=1
 
-    if (i == 0):
-        feature_all = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
-    else:
-        features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
-        feature_all = np.vstack([feature_all, features])
 
-'''
+#############ai hub - 감성 대화 데이터셋 (github 업로드 x) ######################
+for a in range(0, len(path_data_2)):
+    directories = os.listdir(path_data_2[a])
+
+    print(directories)
+    f = open(file_name_2, 'r', encoding='utf-8-sig')
+    rdr = csv.reader(f)
+
+    for line in rdr:
+        if (line[0] + ".wav") not in directories: continue
+        #print(line[0])
+        file_path = path_data_2[a] + "/" + line[0] + ".wav"
+        X, sr = librosa.load(file_path, sr=None)
+
+        if line[5] == "무감정": label = 0
+        elif line[5] == "기쁨": label = 1
+        elif line[5] == "분노": label = 2
+        elif line[5] == "슬픔": label = 3
+        elif line[5] == "혐오": label = 4
+        elif line[5] == "놀람": label = 5
+        elif line[5] == "무서움": label = 6
+
+        if (labels.count(label) > label_max) : continue
+        else : labels.append(label)
+
+
+        stft = np.abs(librosa.stft(X))
+
+        ############# EXTRACTING AUDIO FEATURES (음성 특징 데이터 추출) #############
+        mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40),axis=1)
+
+        chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T,axis=0)
+
+        mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T,axis=0)
+
+        contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr,fmin=0.5*sr* 2**(-6)).T,axis=0)
+
+        tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X),sr=sr*2).T,axis=0)
+
+        if (i == 0) : feature_all = np.hstack([mfccs,chroma,mel,contrast,tonnetz])
+        else :
+            features = np.hstack([mfccs,chroma,mel,contrast,tonnetz])
+            feature_all = np.vstack([feature_all, features])
+        i+=1
+
+
+    f.close()
+
+
+
+
 #감정 별 데이터 개수 출력
 for i in range(0, len(emotions)) :
     print(emotions[i] + " : " + str(labels.count(i)))
@@ -176,7 +231,15 @@ for i in range(len(y)):
     y[i] = int(y[i])
 
 
+###################################################################################################
+###################################################################################################
 
+
+
+
+###################################################################################################
+#음성 감정 분석 모델 학습
+###################################################################################################
 
 n_labels = len(y)
 n_unique_labels = len(np.unique(y))
@@ -192,35 +255,24 @@ X_train, X_test, y_train, y_test = train_test_split(feature_all, one_hot_encode,
 
 ########################### MODEL 1 ###########################
 model = Sequential()
-
-#model.add(Dense(X_train.shape[1],input_dim =X_train.shape[1],init='normal',activation ='relu'))
 model.add(Dense(X_train.shape[1],input_dim =X_train.shape[1], activation ='relu'))
-
-model.add(Dense(400,activation ='relu'))
-
+model.add(Dense(512, activation='relu'))
 model.add(Dropout(0.2))
-
-model.add(Dense(200,activation ='relu'))
-
+model.add(Dense(512, activation='relu'))
 model.add(Dropout(0.2))
-model.add(Dense(100,activation ='relu'))
-
+model.add(Dense(512, activation='relu'))
 model.add(Dropout(0.2))
-print("y_trainshape" + str(y_train.shape[1]))
 model.add(Dense(y_train.shape[1],activation ='softmax'))
+model.compile(optimizer = "Adam", loss='categorical_crossentropy', metrics=['accuracy'])
 
-model.compile(loss = 'categorical_crossentropy',optimizer='adadelta',metrics=['accuracy'])
-
-model.fit(X_train,y_train, epochs=100, batch_size = 16,verbose=1)
-
-
-model.evaluate(X_test,y_test)
 model.summary()
+# Since the dataset already takes care of batching,
+# we don't pass a `batch_size` argument.
+model.fit(X_train,y_train, epochs=500, batch_size = 16,verbose=1)
+model.evaluate(X_test,y_test)
 
-mlp_model = model.to_json()
-with open('mlp_model_relu_adadelta_original.json','w') as j:
-    j.write(mlp_model)
-model.save_weights("mlp_relu_adadelta_model_original.h5")
+#Hugging face에 업로드할 파일 저장
+model.save('audio_model/seq_test1.h5')
 
 y_pred_model1 = model.predict(X_test)
 y2 = np.argmax(y_pred_model1,axis=1)
@@ -233,6 +285,8 @@ for i in range(y2.shape[0]):
 
 print('Accuracy for model 1 : ' + str((count / y2.shape[0]) * 100))
 
+
+
 #데이터셋 split
 X_train2,X_test2,y_train2,y_test2 = train_test_split(feature_all,y,test_size = 0.3,shuffle=True, random_state=30)
 eval_s = [(X_train2, y_train2),(X_test2,y_test2)]
@@ -240,7 +294,7 @@ eval_s = [(X_train2, y_train2),(X_test2,y_test2)]
 
 ########################### MODEL  ###########################
 
-model3 = XGBClassifier(n_estimators=100, learning_rate=0.1, max_depth=3)
+model3 = XGBClassifier(n_estimators=300, learning_rate=0.1, max_depth=3)
 model3.fit(X_train2,y_train2, eval_set = eval_s)
 model3.evals_result()
 score = cross_val_score(model3, X_train2, y_train2, cv=5)
@@ -260,6 +314,10 @@ filename = 'audio_model/xgb_model_original.model'
 
 # 모델 저장
 pickle.dump(model3, open(filename, 'wb'))
+
+
+###################################################################################################
+###################################################################################################
 
 
 
