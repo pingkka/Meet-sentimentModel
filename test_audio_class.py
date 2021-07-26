@@ -6,6 +6,7 @@
 import numpy as np
 import librosa
 import pickle
+import preprocessing_audio
 
 
 
@@ -23,20 +24,7 @@ class audioClassification():
 
     def classify(self, file):
 
-        ########################### PREDICTION ###########################
-        X,sr = librosa.load(file, sr = None)
-        stft = np.abs(librosa.stft(X))
-
-        ############# EXTRACTING AUDIO FEATURES #############
-        mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40),axis=1)
-
-        chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T,axis=0)
-
-        mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T,axis=0)
-
-        contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr,fmin=0.5*sr* 2**(-6)).T,axis=0)
-
-        tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X),sr=sr*2).T,axis=0)
+        mfccs, chroma, mel, contrast, tonnetz = preprocessing_audio.extract_mfcc(file)
 
         features = np.hstack([mfccs,chroma,mel,contrast,tonnetz])
 

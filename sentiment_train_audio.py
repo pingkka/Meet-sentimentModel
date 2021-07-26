@@ -14,311 +14,84 @@ import csv
 from collections import Counter
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout, Flatten, Embedding
+import preprocessing_audio
 
 
-mslen = 22050
 
-data = []
+def train():
 
-max_fs = 0
-labels = []
+    feature_all, one_hot_encode, y= preprocessing_audio.data_preprocessing()
 
-emotions = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
-label_max = 1901
-label = 0
+    X_train, X_test, y_train, y_test = train_test_split(feature_all, one_hot_encode, test_size=0.3, shuffle=True,
+                                                        random_state=20)
 
-path_data = ["4_wav", "5_wav"]
-path_data_2 = ["6_man_wav", "6_woman_wav"]
-file_name = ['audio_sentiment.csv', 'audio_sentiment5.csv']
-file_name_2 = 'audio_sentiment6.csv'
+    ########################### MODEL 1 ###########################
+    model = Sequential()
+    model.add(Dense(X_train.shape[1],input_dim =X_train.shape[1], activation ='relu'))
+    model.add(Dense(512, activation='relu'))
+    model.add(Dropout(0.3))
+    model.add(Dense(512, activation='relu'))
+    model.add(Dropout(0.3))
+    model.add(Dense(512, activation='relu'))
+    model.add(Dropout(0.3))
+    model.add(Dense(y_train.shape[1],activation ='softmax'))
+    model.compile(optimizer = "Adam", loss='categorical_crossentropy', metrics=['accuracy'])
 
-##########################################################################################
-#음성 데이터셋 -> 특징 데이터 추출
-##########################################################################################
-def most_common_top_1(candidates):
-    #배열에서 가장 많이 나온 값 출력 (동점일 시 더 앞에 있는 index로 출력함)
-    assert isinstance(candidates, list), 'Must be a list type'
-    if len(candidates) == 0: return None
-    return Counter(candidates).most_common(n=1)[0][0]
+    model.summary()
+    # Since the dataset already takes care of batching,
+    # we don't pass a `batch_size` argument.
+    model.fit(X_train,y_train, epochs=500, batch_size = 16,verbose=1)
+    model.evaluate(X_test,y_test)
 
+    #Hugging face에 업로드할 파일 저장
+    model.save('audio_model/audio_50016.h5')
 
-#ai hub - KETI 감성 대화 (github 업로드 x)
-i = 0
-feature_all = np.array([])
-for a in range(0, len(file_name)) :
-    directories = os.listdir(path_data[a])
+    y_pred_model1 = model.predict(X_test)
+    y2 = np.argmax(y_pred_model1,axis=1)
+    y_test2 = np.argmax(y_test , axis = 1)
 
-    print(directories)
-    f = open(file_name[a],'r',encoding='utf-8-sig')
-    rdr = csv.reader(f)
+    count = 0
+    for i in range(y2.shape[0]):
+        if y2[i] == y_test2[i]:
+            count+=1
 
-    #음성 데이터셋의 감정을 분류한 csv 파일을 읽어 가장 많이 투표된 감정으로 라벨링 (5명이 각자 음성에 맞는 데이터를 기록한 파일임)
-    for line in rdr:
-        if (line[0] + ".wav") not in directories: continue
-        print(line[0])
-        file_path = path_data[a]+"/" + line[0] + ".wav"
+    print('Accuracy for model 1 : ' + str((count / y2.shape[0]) * 100))
 
-        X, sr = librosa.load(file_path, sr=None)
 
-        sentiment_line = []
-        sentiment_line.append(line[3])
-        sentiment_line.append(line[5])
-        sentiment_line.append(line[7])
-        sentiment_line.append(line[9])
-        sentiment_line.append(line[11])
-        most_sentiment = most_common_top_1(sentiment_line)
-        print(most_sentiment)
-        if most_sentiment == "Neutral" :  label = 0
-        elif most_sentiment == "Happiness" : label = 1
-        elif most_sentiment == "Angry" : label = 2
-        elif most_sentiment == "Sadness" : label = 3
-        elif most_sentiment == "Disgust" : label = 4
-        elif most_sentiment == "Surprise" : label = 5
-        else : label = 6
 
-        if (labels.count(label) > label_max) : continue
-        else : labels.append(label)
+    #데이터셋 split
+    X_train2,X_test2,y_train2,y_test2 = train_test_split(feature_all,y,test_size = 0.3,shuffle=True, random_state=30)
+    eval_s = [(X_train2, y_train2),(X_test2,y_test2)]
 
 
+    ########################### MODEL  ###########################
 
+    model3 = XGBClassifier(n_estimators=500, learning_rate=0.2, max_depth=4)
+    model3.fit(X_train2,y_train2, eval_set = eval_s)
+    model3.evals_result()
+    score = cross_val_score(model3, X_train2, y_train2, cv=5)
+    y_pred3 = model3.predict(X_test2)
 
-        stft = np.abs(librosa.stft(X))
 
-        ############# EXTRACTING AUDIO FEATURES (음성 특징 데이터 추출) #############
-        mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40),axis=1)
+    count = 0
+    for i in range(y_pred3.shape[0]):
+        if y_pred3[i] == y_test2[i]:
+            count+=1
 
-        chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T,axis=0)
+    print('Accuracy for model 3 : ' + str((count / y_pred3.shape[0]) * 100))
 
-        mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T,axis=0)
 
-        contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr,fmin=0.5*sr* 2**(-6)).T,axis=0)
+    # 파일명
+    filename = 'audio_model/xgb_model.model50024.model'
 
-        tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X),sr=sr*2).T,axis=0)
+    # 모델 저장
+    pickle.dump(model3, open(filename, 'wb'))
 
-        if (i == 0) : feature_all = np.hstack([mfccs,chroma,mel,contrast,tonnetz])
-        else :
-            features = np.hstack([mfccs,chroma,mel,contrast,tonnetz])
-            feature_all = np.vstack([feature_all, features])
 
-        i+=1
+    ###################################################################################################
+    ###################################################################################################
 
-    f.close()
-
-#모두의 말뭉치 - 감성 대화 음성 (github 업로드 x)
-if(labels.count(1) <= label_max):
-    #추가로 수집한 joy
-    directories = os.listdir("joy_wav")
-    print(directories)
-
-    for a in directories:
-        labels.append(1)
-        file_path = "joy_wav/" + a
-
-        X, sr = librosa.load(file_path, sr=None)
-        stft = np.abs(librosa.stft(X))
-
-        ############# EXTRACTING AUDIO FEATURES #############
-        mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40), axis=1)
-
-        chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T, axis=0)
-
-        mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T, axis=0)
-
-        contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr, fmin=0.5 * sr * 2 ** (-6)).T, axis=0)
-
-        tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sr * 2).T, axis=0)
-
-        if (i == 0):
-            feature_all = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
-        else:
-            features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
-            feature_all = np.vstack([feature_all, features])
-        i+=1
-
-
-if(labels.count(5) <= label_max):
-    #추가로 수집한 surprise
-    directories = os.listdir("sur_wav")
-    print(directories)
-
-    for a in directories:
-        labels.append(5)
-        file_path = "sur_wav/" + a
-
-        X, sr = librosa.load(file_path, sr=None)
-        stft = np.abs(librosa.stft(X))
-
-        ############# EXTRACTING AUDIO FEATURES #############
-        mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40), axis=1)
-
-        chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T, axis=0)
-
-        mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T, axis=0)
-
-        contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr, fmin=0.5 * sr * 2 ** (-6)).T, axis=0)
-
-        tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sr * 2).T, axis=0)
-
-        if (i == 0):
-            feature_all = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
-        else:
-            features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
-            feature_all = np.vstack([feature_all, features])
-        i+=1
-
-
-#############ai hub - 감성 대화 데이터셋 (github 업로드 x) ######################
-for a in range(0, len(path_data_2)):
-    directories = os.listdir(path_data_2[a])
-
-    print(directories)
-    f = open(file_name_2, 'r', encoding='utf-8-sig')
-    rdr = csv.reader(f)
-
-    for line in rdr:
-        if (line[0] + ".wav") not in directories: continue
-        #print(line[0])
-        file_path = path_data_2[a] + "/" + line[0] + ".wav"
-        X, sr = librosa.load(file_path, sr=None)
-
-        if line[5] == "무감정": label = 0
-        elif line[5] == "기쁨": label = 1
-        elif line[5] == "분노": label = 2
-        elif line[5] == "슬픔": label = 3
-        elif line[5] == "혐오": label = 4
-        elif line[5] == "놀람": label = 5
-        elif line[5] == "무서움": label = 6
-
-        if (labels.count(label) > label_max) : continue
-        else : labels.append(label)
-
-
-        stft = np.abs(librosa.stft(X))
-
-        ############# EXTRACTING AUDIO FEATURES (음성 특징 데이터 추출) #############
-        mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sr, n_mfcc=40),axis=1)
-
-        chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sr).T,axis=0)
-
-        mel = np.mean(librosa.feature.melspectrogram(X, sr=sr).T,axis=0)
-
-        contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sr,fmin=0.5*sr* 2**(-6)).T,axis=0)
-
-        tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X),sr=sr*2).T,axis=0)
-
-        if (i == 0) : feature_all = np.hstack([mfccs,chroma,mel,contrast,tonnetz])
-        else :
-            features = np.hstack([mfccs,chroma,mel,contrast,tonnetz])
-            feature_all = np.vstack([feature_all, features])
-        i+=1
-
-
-    f.close()
-
-
-
-
-#감정 별 데이터 개수 출력
-for i in range(0, len(emotions)) :
-    print(emotions[i] + " : " + str(labels.count(i)))
-
-
-
-#라벨 값 저장
-from copy import deepcopy
-y = deepcopy(labels)
-for i in range(len(y)):
-    y[i] = int(y[i])
-
-
-###################################################################################################
-###################################################################################################
-
-
-
-
-###################################################################################################
-#음성 감정 분석 모델 학습
-###################################################################################################
-
-n_labels = len(y)
-n_unique_labels = len(np.unique(y))
-one_hot_encode = np.zeros((n_labels, n_unique_labels))
-f = np.arange(n_labels)
-for i in range(len(f)):
-    one_hot_encode[f[i], y[i] - 1] = 1
-print(feature_all)
-print(one_hot_encode)
-
-X_train, X_test, y_train, y_test = train_test_split(feature_all, one_hot_encode, test_size=0.3, shuffle=True,
-                                                    random_state=20)
-
-########################### MODEL 1 ###########################
-model = Sequential()
-model.add(Dense(X_train.shape[1],input_dim =X_train.shape[1], activation ='relu'))
-model.add(Dense(512, activation='relu'))
-model.add(Dropout(0.2))
-model.add(Dense(512, activation='relu'))
-model.add(Dropout(0.2))
-model.add(Dense(512, activation='relu'))
-model.add(Dropout(0.2))
-model.add(Dense(y_train.shape[1],activation ='softmax'))
-model.compile(optimizer = "Adam", loss='categorical_crossentropy', metrics=['accuracy'])
-
-model.summary()
-# Since the dataset already takes care of batching,
-# we don't pass a `batch_size` argument.
-model.fit(X_train,y_train, epochs=500, batch_size = 16,verbose=1)
-model.evaluate(X_test,y_test)
-
-#Hugging face에 업로드할 파일 저장
-model.save('audio_model/seq_test1.h5')
-
-y_pred_model1 = model.predict(X_test)
-y2 = np.argmax(y_pred_model1,axis=1)
-y_test2 = np.argmax(y_test , axis = 1)
-
-count = 0
-for i in range(y2.shape[0]):
-    if y2[i] == y_test2[i]:
-        count+=1
-
-print('Accuracy for model 1 : ' + str((count / y2.shape[0]) * 100))
-
-
-
-#데이터셋 split
-X_train2,X_test2,y_train2,y_test2 = train_test_split(feature_all,y,test_size = 0.3,shuffle=True, random_state=30)
-eval_s = [(X_train2, y_train2),(X_test2,y_test2)]
-
-
-########################### MODEL  ###########################
-
-model3 = XGBClassifier(n_estimators=300, learning_rate=0.1, max_depth=3)
-model3.fit(X_train2,y_train2, eval_set = eval_s)
-model3.evals_result()
-score = cross_val_score(model3, X_train2, y_train2, cv=5)
-y_pred3 = model3.predict(X_test2)
-
-
-count = 0
-for i in range(y_pred3.shape[0]):
-    if y_pred3[i] == y_test2[i]:
-        count+=1
-
-print('Accuracy for model 3 : ' + str((count / y_pred3.shape[0]) * 100))
-
-
-# 파일명
-filename = 'audio_model/xgb_model_original.model'
-
-# 모델 저장
-pickle.dump(model3, open(filename, 'wb'))
-
-
-###################################################################################################
-###################################################################################################
-
+train()
 
 
 
