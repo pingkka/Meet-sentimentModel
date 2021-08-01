@@ -20,7 +20,7 @@ import preprocessing_audio
 
 def train():
 
-    feature_all, one_hot_encode, y= preprocessing_audio.data_preprocessing()
+    feature_all, one_hot_encode, y= preprocessing_audio.data_preprocessing_total()
 
     X_train, X_test, y_train, y_test = train_test_split(feature_all, one_hot_encode, test_size=0.3, shuffle=True,
                                                         random_state=20)
@@ -44,7 +44,7 @@ def train():
     model.evaluate(X_test,y_test)
 
     #Hugging face에 업로드할 파일 저장
-    model.save('audio_model/audio_50016.h5')
+    model.save('audio_model/audio_50016_f.h5')
 
     y_pred_model1 = model.predict(X_test)
     y2 = np.argmax(y_pred_model1,axis=1)
@@ -64,7 +64,7 @@ def train():
     eval_s = [(X_train2, y_train2),(X_test2,y_test2)]
 
 
-    ########################### MODEL  ###########################
+    ########################### MODEL 2###########################
 
     model3 = XGBClassifier(n_estimators=500, learning_rate=0.2, max_depth=4)
     model3.fit(X_train2,y_train2, eval_set = eval_s)
@@ -82,7 +82,7 @@ def train():
 
 
     # 파일명
-    filename = 'audio_model/xgb_model.model50024.model'
+    filename = 'audio_model/xgb_50024_f.model'
 
     # 모델 저장
     pickle.dump(model3, open(filename, 'wb'))
