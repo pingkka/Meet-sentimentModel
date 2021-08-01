@@ -23,9 +23,9 @@ device = torch.device("cuda")
 class HwangariSentimentModel(ElectraPreTrainedModel):
   def __init__(self, config):
     super().__init__(config)
-    self.num_labels = 7 #7개로 분류
+    self.num_labels = 8 #7개로 분류
     self.electra = ElectraModel(config).to(device)
-    self.classifier = har_model_head.ElectraClassificationHead(config, 7).to(device)
+    self.classifier = har_model_head.ElectraClassificationHead(config, self.num_labels).to(device)
     self.dropout = nn.Dropout(config.hidden_dropout_prob).to(device)
 
     self.init_weights()

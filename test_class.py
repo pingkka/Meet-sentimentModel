@@ -18,7 +18,7 @@ class LanoiceClassification():
         self.labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
 
         # 음성 모델 파일명
-        self.filename = 'audio_model/xgb_model5008.model'
+        self.filename = 'audio_model/xgb_model3004.model'
 
         # 음성 모델 불러오기
         self.loaded_model = pickle.load(open(self.filename, 'rb'))
@@ -29,10 +29,10 @@ class LanoiceClassification():
         self.senti_loss = [5.0, 3.5, 4.0, 5.0, 8.0, 9.5]
         self.tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
         # GPU 사용 여부
-        self.device = torch.device("cpu")
+        self.device = torch.device("cuda")
 
         # 텍스트 모델 불러오기
-        self.model = har_model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v2").to(self.device)
+        self.model = har_model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v3").to(self.device)
 
     def classify(self, audio_path, text):
 
