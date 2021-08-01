@@ -18,7 +18,7 @@ class LanoiceClassification():
         self.labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
 
         # 음성 모델 파일명
-        self.filename = 'audio_model/xgb_model3004.model'
+        self.filename = 'audio_model/xgb_model.model50024_f.model'
 
         # 음성 모델 불러오기
         self.loaded_model = pickle.load(open(self.filename, 'rb'))
@@ -87,57 +87,70 @@ class LanoiceClassification():
         attention_mask = inputs['attention_mask'].to(self.device)
         output = self.model(input_ids.to(self.device), attention_mask.to(self.device))[0]
         _, prediction = torch.max(output, 1)
+        print(output)
 
         label_loss_str = str(output).split(",")
-
-        label_loss = [float(x.strip().replace(']', '')) for x in label_loss_str[1:7]]
+        print(label_loss_str)
+        label_loss = [float(x.strip().replace(']', '')) for x in label_loss_str[1:8]]
         print("\n<Text Loss>")
 
 
-        pre_result = int(re.findall("\d+", str(prediction))[0])
+        #pre_result = int(re.findall("\d+", str(prediction))[0])
+        result = int(re.findall("\d+", str(prediction))[0])
 
-        # 손실함수 값이 senti_loss 값보다 높아야 해당 감정으로 분류
-        result = 0
-        if label_loss[pre_result - 1] >= self.senti_loss[pre_result - 1]:
-            result = pre_result
+        # # 손실함수 값이 senti_loss 값보다 높아야 해당 감정으로 분류
+        # result = 0
+        # if label_loss[pre_result - 1] >= self.senti_loss[pre_result - 1]:
+        #     result = pre_result
 
-        # 안이 들어간 말로 결과가 나왔을 경우 가장 큰 값을 무시함 or 아예 무감정으로 분류되도록 함
-        for i in self.none_words:
-            if i in text:
-                result = 0
-        for j in self.pass_words:
-            if j in text:
-                label_loss[pre_result - 1] = 0
-                result = label_loss.index(max(label_loss)) + 1
+        # # 안이 들어간 말로 결과가 나왔을 경우 가장 큰 값을 무시함 or 아예 무감정으로 분류되도록 함
+        # for i in self.none_words:
+        #     if i in text:
+        #         result = 0
+        # for j in self.pass_words:
+        #     if j in text:
+        #         label_loss[pre_result - 1] = 0
+        #         result = label_loss.index(max(label_loss)) + 1
 
 
 
-        for i in range(0, 6):
-            print(self.labels[i + 1], ":", label_loss[i])
+        for i in range(0, 7):
+            print(self.labels[i], ":", label_loss[i])
         print(f'Sentiment : {self.labels[result]}')
 
+        text_score = []
+        audio_score = []
+        total_score = []
+        for i in range(0, len(label_loss)):
+            text_score.append(label_loss[i] / (sum(label_loss) + 10))
+            audio_score.append(y_chunk_model1_proba[0][i+1] - 0.35)
+        for i in range(0, len(audio_score)):
+            total_score.append(float(audio_score[i]) + float(text_score[i]))
+        print(total_score)
+        total_result = total_score.index(max(total_score))
 
 
 
-        # 결과 합산 (값 기반 계산)
-        if (index == 0 or (result == 0 and pre_result == 5) or (result == 0 and pre_result == 6)):
-            total_result = -1
-        elif (index == pre_result):
-            total_result = index - 1
 
-        else:
-            text_score = []
-            audio_score = []
-            total_score = []
-            for i in range(0, len(label_loss)):
-                text_score.append(label_loss[i] / (sum(label_loss) + 10))
-                audio_score.append(y_chunk_model1_proba[0][i + 1] - 0.35)
-
-            for i in range(0, len(audio_score)):
-                total_score.append(float(audio_score[i]) + float(text_score[i]))
-            print(total_score)
-
-            total_result = total_score.index(max(total_score))
+        # # 결과 합산 (값 기반 계산)
+        # if (index == 0 or (result == 0 and pre_result == 5) or (result == 0 and pre_result == 6)):
+        #     total_result = -1
+        # elif (index == pre_result):
+        #     total_result = index - 1
+        #
+        # else:
+        #     text_score = []
+        #     audio_score = []
+        #     total_score = []
+        #     for i in range(0, len(label_loss)):
+        #         text_score.append(label_loss[i] / (sum(label_loss) + 10))
+        #         audio_score.append(y_chunk_model1_proba[0][i + 1] - 0.35)
+        #
+        #     for i in range(0, len(audio_score)):
+        #         total_score.append(float(audio_score[i]) + float(text_score[i]))
+        #     print(total_score)
+        #
+        #     total_result = total_score.index(max(total_score))
 
 
         '''
