@@ -20,7 +20,7 @@ class ElectraClassificationHead(nn.Module):
     x = self.out_proj(x)
     return x
 
-
+  #
   # def __init__(self, config, num_labels):
   #   super().__init__()
   #   self.dropout = nn.Dropout(config.hidden_dropout_prob)
