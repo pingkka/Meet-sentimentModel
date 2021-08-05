@@ -32,7 +32,8 @@ for line in rdr:
     result = classification.classify(audio_path, text)
     end_time = time.time()
 
-    #print("감정 : " + labels[int(line[2])])
+    print(total)
+    print("감정 : " + labels[int(line[2])])
     print("예측 결과 : " + result) #감정 분석 결과
     print("실행 속도 : {} sec".format((end_time - start_time)))
     time_arr.append(end_time - start_time)
@@ -61,10 +62,3 @@ print("평균 실행 속도 : " + str(sum(time_arr)/len(time_arr)) + " sec")
 
 
 
-
-
-# audio = "4_wav/5e2ac3d55807b852d9e01fd6.wav" #음성 파일
-# text = "우리 아빠 어제 술먹고 또 사고쳤어" #텍스트 파일
-# classification = test_class.LanoiceClassification()
-# result = classification.classify(audio, text)
-#print(result) #감정 분석 결과

@@ -20,7 +20,7 @@ import preprocessing_audio
 
 def train():
 
-    feature_all, one_hot_encode, y= preprocessing_audio.data_preprocessing_total()
+    feature_all, one_hot_encode, y= preprocessing_audio.data_preprocessing("female")
 
     X_train, X_test, y_train, y_test = train_test_split(feature_all, one_hot_encode, test_size=0.3, shuffle=True,
                                                         random_state=20)
@@ -44,7 +44,7 @@ def train():
     model.evaluate(X_test,y_test)
 
     #Hugging face에 업로드할 파일 저장
-    model.save('audio_model/audio_50016_f.h5')
+    model.save('audio_model/audio_50016_ff.h5')
 
     y_pred_model1 = model.predict(X_test)
     y2 = np.argmax(y_pred_model1,axis=1)
@@ -82,10 +82,42 @@ def train():
 
 
     # 파일명
-    filename = 'audio_model/xgb_50024_f.model'
+    filename = 'audio_model/xgb_50024_ff.model'
 
     # 모델 저장
     pickle.dump(model3, open(filename, 'wb'))
+
+    ########################### MODEL 1 ###########################
+    model = Sequential()
+    model.add(Dense(X_train.shape[1], input_dim=X_train.shape[1], activation='relu'))
+    model.add(Dense(400, activation='relu'))
+    model.add(Dropout(0.3))
+    model.add(Dense(200, activation='relu'))
+    model.add(Dropout(0.3))
+    model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.3))
+    model.add(Dense(y_train.shape[1], activation='softmax'))
+    model.compile(optimizer="Adam", loss='categorical_crossentropy', metrics=['accuracy'])
+
+    model.summary()
+    # Since the dataset already takes care of batching,
+    # we don't pass a `batch_size` argument.
+    model.fit(X_train, y_train, epochs=300, batch_size=16, verbose=1)
+    model.evaluate(X_test, y_test)
+
+    # Hugging face에 업로드할 파일 저장
+    model.save('audio_model/audio_30016_ff.h5')
+
+    y_pred_model1 = model.predict(X_test)
+    y2 = np.argmax(y_pred_model1, axis=1)
+    y_test2 = np.argmax(y_test, axis=1)
+
+    count = 0
+    for i in range(y2.shape[0]):
+        if y2[i] == y_test2[i]:
+            count += 1
+
+    print('Accuracy for model 2 : ' + str((count / y2.shape[0]) * 100))
 
 
     ###################################################################################################

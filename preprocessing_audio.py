@@ -241,7 +241,7 @@ def data_preprocessing(gender):
     labels = []
 
     emotions = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
-    label_max = 1150
+    label_max = 2650
     label = 0
 
     male = ["male", "남성"]
