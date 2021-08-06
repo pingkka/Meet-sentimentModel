@@ -1,4 +1,5 @@
 import test_class
+#import test_audio_class
 import numpy as np
 import os
 import csv
@@ -13,6 +14,7 @@ import time
 
 labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
 classification = test_class.LanoiceClassification()
+#classification = test_audio_class.audioClassification()
 directories = os.listdir("test_wav")
 print(directories)
 
@@ -30,6 +32,7 @@ for line in rdr:
     text = line[1]
     start_time = time.time()
     result = classification.classify(audio_path, text)
+    #result = classification.classify(audio_path)
     end_time = time.time()
 
     print(total)

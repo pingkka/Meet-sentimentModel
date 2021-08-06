@@ -18,7 +18,7 @@ class LanoiceClassification():
         self.labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
 
         # 음성 모델 파일명
-        self.filename = 'audio_model/xgb_model.model50024_f.model'
+        self.filename = 'audio_model/xgb_500_0.1_6.model'
 
         # 음성 모델 불러오기
         self.loaded_model = pickle.load(open(self.filename, 'rb'))

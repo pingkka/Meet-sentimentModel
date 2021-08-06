@@ -47,7 +47,7 @@ def train():
 
     model = har_model.HwangariSentimentModel.from_pretrained("monologg/koelectra-base-v3-discriminator").to(device)
 
-    epochs = 1
+    epochs = 15
     batch_size = 64
 
     # 모델 레이어 보기
