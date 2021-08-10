@@ -15,7 +15,7 @@ class audioClassification():
         self.emotions = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
 
         # 파일명
-        self.filename = 'audio_model/xgb_model.model'
+        self.filename = 'audio_gender_model/xgb_1_300_0.1_6.model'
 
         # 모델 불러오기
         self.loaded_model = pickle.load(open(self.filename, 'rb'))
@@ -38,9 +38,19 @@ class audioClassification():
         y_chunk_model1_proba = self.loaded_model.predict_proba(x_chunk)
         index = np.argmax(y_chunk_model1)
 
+        print(y_chunk_model1_proba)
+        print(y_chunk_model1)
+        print(index)
+
         #print("-----<Accuracy>------")
         #for proba in range(0, len(y_chunk_model1_proba[0])):
         #    print(self.emotions[proba]+  " : " + str(y_chunk_model1_proba[0][proba]))
 
         #print('\nEmotion:',self.emotions[int(y_chunk_model1[0])])
         return str(self.emotions[int(y_chunk_model1[0])])
+
+
+classification = audioClassification()
+audio_path = "4_wav/5e37dc03ee8206179943cb41.wav"
+result = classification.classify(audio_path)
+print(result)

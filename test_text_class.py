@@ -17,7 +17,7 @@ class textClassification():
         self.tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
         # GPU 사용
         self.device = torch.device("cuda")
-        self.model = har_model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v1").to(self.device)
+        self.model = har_model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v4").to(self.device)
 
 
     def textClassification(self, text):
@@ -48,38 +48,16 @@ class textClassification():
         output = self.model(input_ids.to(self.device), attention_mask.to(self.device))[0]
         _, prediction = torch.max(output, 1)
 
-
-
-
-
         label_loss_str = str(output).split(",")
+        label_loss_str[0] = label_loss_str[0][9:]
+        label_loss = [float(x.strip().replace(']', '')) for x in label_loss_str[0:7]]
+        print("\n<Text Loss>")
 
-        label_loss = [float(x.strip().replace(']','')) for x in label_loss_str[1:7]]
+        # pre_result = int(re.findall("\d+", str(prediction))[0])
+        result = int(re.findall("\d+", str(prediction))[0])
 
-        #print(f'Review text : {text}')
-
-        pre_result = int(re.findall("\d+",str(prediction))[0])
-        #손실함수 값이 4.0이상인게 없으면 무감정(none)으로 분류
-        result = 0
-        if label_loss[pre_result-1] >= self.senti_loss[pre_result-1]:
-          result = pre_result
-
-
-        #안이 들어간 말로 결과가 나왔을 경우 가장 큰 값을 무시함 or 아예 무감정으로 분류되도록 함
-        for i in self.none_words:
-          if i in text:
-            result = 0
-        for j in self.pass_words:
-          if j in text:
-            label_loss[pre_result - 1] = 0
-            result = label_loss.index(max(label_loss)) + 1
-
-
-        #print(f'Sentiment : {labels[result]}')
-
-        #print("\n<감정 별 손실 함수 값>")
-        #for i in range(0,6):
-
-        #print(labels[i+1], ":", label_loss[i])
+        for i in range(0, len(label_loss)):
+            print(self.labels[i], ":", label_loss[i])
+        print(f'Sentiment : {self.labels[result]}')
 
         return str(self.labels[result])

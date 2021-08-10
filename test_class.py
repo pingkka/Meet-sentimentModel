@@ -13,20 +13,26 @@ from transformers import AutoTokenizer
 import har_model
 
 
+
 class LanoiceClassification():
     def __init__(self):
         self.labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
+        self.gender = ["male", "female"]
 
         # 음성 모델 파일명
-        self.filename = 'audio_model/xgb_model.model50024_f.model'
+        self.filename = 'audio_model/xgb_4_300_0.1_6.model'
 
         # 음성 모델 불러오기
-        self.loaded_model = pickle.load(open(self.filename, 'rb'))
+        self.audio_model = pickle.load(open(self.filename, 'rb'))
+
+        # # gender 모델 파일명
+        # self.gender_file = 'audio_gender_model/xgb_1_300_0.1_6.model'
+        #
+        # # gender 모델 불러오기
+        # self.gender_model = pickle.load(open(self.gender_file, 'rb'))
 
         # 텍스트 모델 초기값
-        self.none_words = ["안싫", "안 싫", "안무서", "안놀람", "안놀랐", "안행복", "안기뻐", "안빡", "안우울", "안짜증", "안깜짝", "안무섭"]
-        self.pass_words = ["안좋", "안 좋"]
-        self.senti_loss = [5.0, 3.5, 4.0, 5.0, 8.0, 9.5]
+
         self.tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
         # GPU 사용 여부
         self.device = torch.device("cuda")
@@ -56,18 +62,27 @@ class LanoiceClassification():
 
         x_chunk = np.array(features)
         x_chunk = x_chunk.reshape(1, np.shape(x_chunk)[0])
-        # y_chunk_model1 = self.loaded_model.predict(x_chunk)
-        y_chunk_model1_proba = self.loaded_model.predict_proba(x_chunk)
+        #y_chunk_model1 = self.loaded_model.predict(x_chunk)
+        # y_chunk_gender_proba = self.gender_model.predict_proba(x_chunk)
+        # gender_index = np.argmax(y_chunk_gender_proba)
+        # if (gender_index == 0):
+        #     filename = 'audio_model/xgb_model.model50024_m.model'
+        # elif (gender_index == 1):
+        #     filename = 'audio_model/xgb_1_300_0.1_6_f.model'
+        # 음성 모델 불러오기
+        audio_model = pickle.load(open(self.filename, 'rb'))
+
+        y_chunk_model1_proba = self.audio_model.predict_proba(x_chunk)
         index = np.argmax(y_chunk_model1_proba)
 
 
-        # print("----------------------------")
-        # print(f'Review text : {text}')
-        # print("<Audio Accuracy>")
-        # for proba in range(0, len(y_chunk_model1_proba[0])):
-        #     print(self.labels[proba] + " : " + str(y_chunk_model1_proba[0][proba]))
-        #
-        # print('\nEmotion:', self.labels[int(index)])
+        print("----------------------------")
+        print(f'Review text : {text}')
+        print("<Audio Accuracy>")
+        for proba in range(0, len(y_chunk_model1_proba[0])):
+            print(self.labels[proba] + " : " + str(y_chunk_model1_proba[0][proba]))
+
+        print('\nEmotion:', self.labels[int(index)])
 
 
         inputs = self.tokenizer(
@@ -92,31 +107,19 @@ class LanoiceClassification():
         label_loss_str = str(output).split(",")
         label_loss_str[0] = label_loss_str[0][9:]
         label_loss = [float(x.strip().replace(']', '')) for x in label_loss_str[0:7]]
-        #print("\n<Text Loss>")
+        print("\n<Text Loss>")
 
 
         #pre_result = int(re.findall("\d+", str(prediction))[0])
         result = int(re.findall("\d+", str(prediction))[0])
 
-        # # 손실함수 값이 senti_loss 값보다 높아야 해당 감정으로 분류
-        # result = 0
-        # if label_loss[pre_result - 1] >= self.senti_loss[pre_result - 1]:
-        #     result = pre_result
-
-        # # 안이 들어간 말로 결과가 나왔을 경우 가장 큰 값을 무시함 or 아예 무감정으로 분류되도록 함
-        # for i in self.none_words:
-        #     if i in text:
-        #         result = 0
-        # for j in self.pass_words:
-        #     if j in text:
-        #         label_loss[pre_result - 1] = 0
-        #         result = label_loss.index(max(label_loss)) + 1
 
 
 
-        # for i in range(0, len(label_loss)):
-        #     print(self.labels[i], ":", label_loss[i])
-        # print(f'Sentiment : {self.labels[result]}')
+
+        for i in range(0, len(label_loss)):
+            print(self.labels[i], ":", label_loss[i])
+        print(f'Sentiment : {self.labels[result]}')
 
         text_score = []
         audio_score = []
@@ -126,11 +129,17 @@ class LanoiceClassification():
         #결과 합산(1) - 단순 합산
         for i in range(0, len(label_loss)):
             text_score.append(label_loss[i] / (sum(label_loss) + 10))
-            audio_score.append(y_chunk_model1_proba[0][i] - 0.35)
+            audio_score.append(y_chunk_model1_proba[0][i])
         for i in range(0, len(audio_score)):
             total_score.append(float(audio_score[i]) + float(text_score[i]))
-        #print(total_score)
-        total_result = total_score.index(max(total_score))
+        #print(text_score, audio_score)
+        print(total_score)
+        if (total_score[0] >= 0.9):
+            total_result = total_score.index(max(total_score))
+        else:
+            total_result = total_score.index(max(total_score[1:]))
+
+
 
 
         # #결과 합산(2) - 순위 합산
@@ -140,19 +149,23 @@ class LanoiceClassification():
         #
         # text_rank = []
         # audio_rank = []
-        # for i in range(3):
+        # for i in range(5):
         #     text_max = label_loss.index(max(text_score))
         #     audio_max = audio_proba.index(max(audio_score))
         #     text_rank.append(text_max)
         #     audio_rank.append(audio_max)
         #
-        #     text_score.remove(max(text_score))
-        #     audio_score.remove(max(audio_score))
+        #     text_score[text_max] = -100
+        #     audio_score[audio_max] = -100
+        # print(text_rank, audio_rank)
         #
-        # #print(text_rank, audio_rank)
-
-
-        #total_result = 0
+        # result_score = [0] * len(label_loss)
+        # for i in range(len(text_rank)):
+        #     result_score[text_rank[i]] += (len(text_rank)-i)*2
+        #     result_score[audio_rank[i]] += (len(text_rank)-i)*2
+        # print(result_score)
+        #
+        # total_result = result_score.index(max(result_score))
 
 
 
@@ -163,4 +176,5 @@ class LanoiceClassification():
         # print("Result : " + self.labels[total_result])
         print("---------------------------------")
 
+        #return self.labels[total_result], self.gender[gender_index]
         return self.labels[total_result]

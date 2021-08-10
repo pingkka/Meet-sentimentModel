@@ -23,28 +23,32 @@ def train():
     feature_all, one_hot_encode, y= preprocessing_audio.data_preprocessing_total()
 
     X_train, X_test, y_train, y_test = train_test_split(feature_all, one_hot_encode, test_size=0.3, shuffle=True,
-                                                        random_state=20)
+                                                        random_state=82)
 
     ########################### MODEL 1 ###########################
     model = Sequential()
     model.add(Dense(X_train.shape[1],input_dim =X_train.shape[1], activation ='relu'))
-    model.add(Dense(512, activation='relu'))
-    model.add(Dropout(0.3))
-    model.add(Dense(512, activation='relu'))
-    model.add(Dropout(0.3))
-    model.add(Dense(512, activation='relu'))
-    model.add(Dropout(0.3))
+    model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.2))
     model.add(Dense(y_train.shape[1],activation ='softmax'))
     model.compile(optimizer = "Adam", loss='categorical_crossentropy', metrics=['accuracy'])
 
     model.summary()
     # Since the dataset already takes care of batching,
     # we don't pass a `batch_size` argument.
-    model.fit(X_train,y_train, epochs=500, batch_size = 16,verbose=1)
+    model.fit(X_train,y_train, epochs=300, batch_size = 16,verbose=1)
     model.evaluate(X_test,y_test)
 
     #Hugging face에 업로드할 파일 저장
-    model.save('audio_model/audio_50016_f.h5')
+    model.save('audio_model/audio_4_unit100_0.1.h5')
 
     y_pred_model1 = model.predict(X_test)
     y2 = np.argmax(y_pred_model1,axis=1)
@@ -66,7 +70,7 @@ def train():
 
     ########################### MODEL 2###########################
 
-    model3 = XGBClassifier(n_estimators=500, learning_rate=0.2, max_depth=4)
+    model3 = XGBClassifier(n_estimators=300, learning_rate=0.1, max_depth=6)
     model3.fit(X_train2,y_train2, eval_set = eval_s)
     model3.evals_result()
     score = cross_val_score(model3, X_train2, y_train2, cv=5)
@@ -82,10 +86,44 @@ def train():
 
 
     # 파일명
-    filename = 'audio_model/xgb_50024_f.model'
+    filename = 'audio_model/xgb_4_300_0.1_6.model'
 
     # 모델 저장
     pickle.dump(model3, open(filename, 'wb'))
+
+    ########################### MODEL 1 ###########################
+    model = Sequential()
+    model.add(Dense(X_train.shape[1], input_dim=X_train.shape[1], activation='relu'))
+    model.add(Dense(150, activation='relu'))
+    model.add(Dropout(0.1))
+    model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.1))
+    model.add(Dense(50, activation='relu'))
+    model.add(Dropout(0.1))
+    model.add(Dense(25, activation='relu'))
+    model.add(Dropout(0.1))
+    model.add(Dense(y_train.shape[1], activation='softmax'))
+    model.compile(optimizer="Adam", loss='categorical_crossentropy', metrics=['accuracy'])
+
+    model.summary()
+    # Since the dataset already takes care of batching,
+    # we don't pass a `batch_size` argument.
+    model.fit(X_train, y_train, epochs=300, batch_size=16, verbose=1)
+    model.evaluate(X_test, y_test)
+
+    # Hugging face에 업로드할 파일 저장
+    model.save('audio_model/audio_4_unit25_0.1.h5')
+
+    y_pred_model1 = model.predict(X_test)
+    y2 = np.argmax(y_pred_model1, axis=1)
+    y_test2 = np.argmax(y_test, axis=1)
+
+    count = 0
+    for i in range(y2.shape[0]):
+        if y2[i] == y_test2[i]:
+            count += 1
+
+    print('Accuracy for model 2 : ' + str((count / y2.shape[0]) * 100))
 
 
     ###################################################################################################

@@ -39,15 +39,15 @@ def draw_graph(epochs, accuracies):
 def train():
 
     #트위터 크롤링 후 라벨링한 csv 파일 (저작권 문제로 github에는 업로드 하지 않음)
-    train_dataset = preprocessing_text.HwangariDataset("csv/traindata43000.csv")
-    test_dataset = preprocessing_text.HwangariDataset("csv/testdata43000.csv")
+    train_dataset = preprocessing_text.HwangariDataset("csv/result_sentiment_48000_train.csv")
+    test_dataset = preprocessing_text.HwangariDataset("csv/result_sentiment_48000_test.csv")
 
     # GPU 사용
     device = torch.device("cuda")
 
     model = har_model.HwangariSentimentModel.from_pretrained("monologg/koelectra-base-v3-discriminator").to(device)
 
-    epochs = 20
+    epochs = 15
     batch_size = 64
 
     # 모델 레이어 보기
@@ -115,7 +115,7 @@ def train():
     # torch.save(model.state_dict(), "real_model.pt")
 
     #Hugging face에 업로드할 파일 저장
-    model.save_pretrained("haremotions-v3")
+    model.save_pretrained("haremotions-v4")
 
     draw_graph(epochs, accuracies)
 
