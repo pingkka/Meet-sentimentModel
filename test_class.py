@@ -13,20 +13,26 @@ from transformers import AutoTokenizer
 import har_model
 
 
+
 class LanoiceClassification():
     def __init__(self):
         self.labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
+        self.gender = ["male", "female"]
 
         # 음성 모델 파일명
-        self.filename = 'audio_model/xgb_500_0.1_6.model'
+        self.filename = 'audio_model/xgb_4_300_0.1_6.model'
 
         # 음성 모델 불러오기
-        self.loaded_model = pickle.load(open(self.filename, 'rb'))
+        self.audio_model = pickle.load(open(self.filename, 'rb'))
+
+        # # gender 모델 파일명
+        # self.gender_file = 'audio_gender_model/xgb_1_300_0.1_6.model'
+        #
+        # # gender 모델 불러오기
+        # self.gender_model = pickle.load(open(self.gender_file, 'rb'))
 
         # 텍스트 모델 초기값
-        self.none_words = ["안싫", "안 싫", "안무서", "안놀람", "안놀랐", "안행복", "안기뻐", "안빡", "안우울", "안짜증", "안깜짝", "안무섭"]
-        self.pass_words = ["안좋", "안 좋"]
-        self.senti_loss = [5.0, 3.5, 4.0, 5.0, 8.0, 9.5]
+
         self.tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
         # GPU 사용 여부
         self.device = torch.device("cuda")
@@ -56,8 +62,17 @@ class LanoiceClassification():
 
         x_chunk = np.array(features)
         x_chunk = x_chunk.reshape(1, np.shape(x_chunk)[0])
-        # y_chunk_model1 = self.loaded_model.predict(x_chunk)
-        y_chunk_model1_proba = self.loaded_model.predict_proba(x_chunk)
+        #y_chunk_model1 = self.loaded_model.predict(x_chunk)
+        # y_chunk_gender_proba = self.gender_model.predict_proba(x_chunk)
+        # gender_index = np.argmax(y_chunk_gender_proba)
+        # if (gender_index == 0):
+        #     filename = 'audio_model/xgb_model.model50024_m.model'
+        # elif (gender_index == 1):
+        #     filename = 'audio_model/xgb_1_300_0.1_6_f.model'
+        # 음성 모델 불러오기
+        audio_model = pickle.load(open(self.filename, 'rb'))
+
+        y_chunk_model1_proba = self.audio_model.predict_proba(x_chunk)
         index = np.argmax(y_chunk_model1_proba)
 
 
@@ -119,7 +134,7 @@ class LanoiceClassification():
             total_score.append(float(audio_score[i]) + float(text_score[i]))
         #print(text_score, audio_score)
         print(total_score)
-        if (total_score[0] >= 0.7):
+        if (total_score[0] >= 0.9):
             total_result = total_score.index(max(total_score))
         else:
             total_result = total_score.index(max(total_score[1:]))
@@ -161,4 +176,5 @@ class LanoiceClassification():
         # print("Result : " + self.labels[total_result])
         print("---------------------------------")
 
+        #return self.labels[total_result], self.gender[gender_index]
         return self.labels[total_result]
