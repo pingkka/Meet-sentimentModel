@@ -1,5 +1,6 @@
-import test_class
+# import test_class
 #import test_audio_class
+import test_text_class
 import numpy as np
 import os
 import csv
@@ -13,8 +14,9 @@ import time
 #5e258fd1305bcf3ad153a6a4,어 청소 니가 대신 해 줘,0,male
 
 labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
-classification = test_class.LanoiceClassification()
+# classification = test_class.LanoiceClassification()
 #classification = test_audio_class.audioClassification()
+classification = test_text_class.textClassification()
 directories = os.listdir("test_wav")
 print(directories)
 
@@ -35,14 +37,15 @@ for line in rdr:
     audio_path = "test_wav/" + line[0]+".wav"
     text = line[1]
     start_time = time.time()
+    result = classification.textClassification(text)
     #result, gender_result = classification.classify(audio_path, text)
-    result = classification.classify(audio_path,text)
+    #result = classification.classify(audio_path,text)
     end_time = time.time()
     sentiment_total[labels.index(result)]+=1
     print(total)
     print("감정, 성별 : " + labels[int(line[2])] + ", " + line[3])
     #print("예측 결과 : " + result + ", " + gender_result) #감정 분석 결과
-    print("예측 결과 : " + result) #감정 분석 결과
+    #print("예측 결과 : " + result) #감정 분석 결과
     print("실행 속도 : {} sec".format((end_time - start_time)))
     time_arr.append(end_time - start_time)
 

@@ -50,7 +50,7 @@ class audioClassification():
         return str(self.emotions[int(y_chunk_model1[0])])
 
 
-classification = audioClassification()
-audio_path = "4_wav/5e37dc03ee8206179943cb41.wav"
-result = classification.classify(audio_path)
-print(result)
+# classification = audioClassification()
+# audio_path = "4_wav/5e37dc03ee8206179943cb41.wav"
+# result = classification.classify(audio_path)
+# print(result)
