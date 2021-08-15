@@ -9,6 +9,7 @@ import librosa
 import numpy as np
 import torch
 from transformers import AutoTokenizer
+from keras.models import load_model
 
 import har_model
 
@@ -19,17 +20,20 @@ class LanoiceClassification():
         self.labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
         self.gender = ["male", "female"]
 
+        #XGBoost 모델 사용시
         # 음성 모델 파일명
-        self.filename = 'audio_model/xgb_4_300_0.1_6.model'
-
+        #self.filename = 'audio_model/xgb_4_300_0.1_6.model'
         # 음성 모델 불러오기
-        self.audio_model = pickle.load(open(self.filename, 'rb'))
+        #self.audio_model = pickle.load(open(self.filename, 'rb'))
 
-        # # gender 모델 파일명
-        # self.gender_file = 'audio_gender_model/xgb_1_300_0.1_6.model'
-        #
-        # # gender 모델 불러오기
-        # self.gender_model = pickle.load(open(self.gender_file, 'rb'))
+        # #Keras Sequential 모델 사용시
+        # self.audio_model = load_model('audio_model/audio_4_unit25_0.1.h5')
+
+        # gender 모델 파일명
+        self.gender_file = 'audio_gender_model/xgb_1_300_0.1_6.model'
+
+        # gender 모델 불러오기
+        self.gender_model = pickle.load(open(self.gender_file, 'rb'))
 
         # 텍스트 모델 초기값
 
@@ -62,17 +66,18 @@ class LanoiceClassification():
 
         x_chunk = np.array(features)
         x_chunk = x_chunk.reshape(1, np.shape(x_chunk)[0])
-        #y_chunk_model1 = self.loaded_model.predict(x_chunk)
-        # y_chunk_gender_proba = self.gender_model.predict_proba(x_chunk)
-        # gender_index = np.argmax(y_chunk_gender_proba)
-        # if (gender_index == 0):
-        #     filename = 'audio_model/xgb_model.model50024_m.model'
-        # elif (gender_index == 1):
-        #     filename = 'audio_model/xgb_1_300_0.1_6_f.model'
-        # 음성 모델 불러오기
-        audio_model = pickle.load(open(self.filename, 'rb'))
+        y_chunk_gender_proba = self.gender_model.predict_proba(x_chunk)
+        gender_index = np.argmax(y_chunk_gender_proba)
+        if (gender_index == 0):
+            filename = 'audio_model/xgb_5_300_0.1_6_m.model'
+        elif (gender_index == 1):
+            filename = 'audio_model/xgb_1_300_0.1_6_f.model'
+        #음성 모델 불러오기
+        audio_model = pickle.load(open(filename, 'rb'))
 
-        y_chunk_model1_proba = self.audio_model.predict_proba(x_chunk)
+        y_chunk_model1_proba = audio_model.predict_proba(x_chunk)
+        #y_chunk_model1_proba = audio_model.predict(x_chunk)
+        print(y_chunk_model1_proba)
         index = np.argmax(y_chunk_model1_proba)
 
 
@@ -176,5 +181,5 @@ class LanoiceClassification():
         # print("Result : " + self.labels[total_result])
         print("---------------------------------")
 
-        #return self.labels[total_result], self.gender[gender_index]
-        return self.labels[total_result]
+        return self.labels[total_result], self.gender[gender_index]
+        #return self.labels[total_result]

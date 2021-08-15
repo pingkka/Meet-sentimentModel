@@ -11,9 +11,6 @@ import re
 class textClassification():
     def __init__(self):
         self.labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
-        self.none_words = ["안싫", "안 싫", "안무서", "안놀람", "안놀랐", "안행복", "안기뻐", "안빡", "안우울", "안짜증", "안깜짝", "안무섭"]
-        self.pass_words = ["안좋", "안 좋"]
-        self.senti_loss = [5.0, 4.0, 6.5, 6.5, 9.0, 8.0]
         self.tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
         # GPU 사용
         self.device = torch.device("cuda")
@@ -61,3 +58,10 @@ class textClassification():
         print(f'Sentiment : {self.labels[result]}')
 
         return str(self.labels[result])
+
+
+
+# classification = textClassification()
+# text = "난 그런거 너무 싫어"
+# result = classification.textClassification(text)
+# print(result)

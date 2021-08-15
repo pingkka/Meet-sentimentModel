@@ -20,7 +20,7 @@ import preprocessing_audio
 
 def train():
 
-    feature_all, one_hot_encode, y= preprocessing_audio.data_preprocessing_total()
+    feature_all, one_hot_encode, y= preprocessing_audio.data_preprocessing("male")
 
     X_train, X_test, y_train, y_test = train_test_split(feature_all, one_hot_encode, test_size=0.3, shuffle=True,
                                                         random_state=82)
@@ -28,8 +28,6 @@ def train():
     ########################### MODEL 1 ###########################
     model = Sequential()
     model.add(Dense(X_train.shape[1],input_dim =X_train.shape[1], activation ='relu'))
-    model.add(Dense(100, activation='relu'))
-    model.add(Dropout(0.2))
     model.add(Dense(100, activation='relu'))
     model.add(Dropout(0.2))
     model.add(Dense(100, activation='relu'))
@@ -48,7 +46,7 @@ def train():
     model.evaluate(X_test,y_test)
 
     #Hugging face에 업로드할 파일 저장
-    model.save('audio_model/audio_4_unit100_0.1.h5')
+    model.save('audio_model/audio_5_unit100_0.1_m.h5')
 
     y_pred_model1 = model.predict(X_test)
     y2 = np.argmax(y_pred_model1,axis=1)
@@ -86,7 +84,7 @@ def train():
 
 
     # 파일명
-    filename = 'audio_model/xgb_4_300_0.1_6.model'
+    filename = 'audio_model/xgb_5_300_0.1_6_m.model'
 
     # 모델 저장
     pickle.dump(model3, open(filename, 'wb'))
@@ -112,7 +110,7 @@ def train():
     model.evaluate(X_test, y_test)
 
     # Hugging face에 업로드할 파일 저장
-    model.save('audio_model/audio_4_unit25_0.1.h5')
+    model.save('audio_model/audio_5_unit25_0.1_m.h5')
 
     y_pred_model1 = model.predict(X_test)
     y2 = np.argmax(y_pred_model1, axis=1)
