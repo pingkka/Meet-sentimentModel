@@ -42,7 +42,7 @@ class LanoiceClassification():
         self.device = torch.device("cuda")
 
         # 텍스트 모델 불러오기
-        self.model = har_model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v4").to(self.device)
+        self.model = har_model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v5").to(self.device)
 
     def classify(self, audio_path, text):
 
