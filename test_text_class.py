@@ -61,7 +61,7 @@ class textClassification():
 
 
 
-# classification = textClassification()
-# text = "난 그런거 너무 싫어"
-# result = classification.textClassification(text)
-# print(result)
+classification = textClassification()
+text = "완전 깜짝놀랐어"
+result = classification.textClassification(text)
+print(result)

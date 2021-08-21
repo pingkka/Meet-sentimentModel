@@ -139,10 +139,11 @@ class LanoiceClassification():
             total_score.append(float(audio_score[i]) + float(text_score[i]))
         #print(text_score, audio_score)
         print(total_score)
-        if (total_score[0] >= 0.9):
+        if (total_score[0] >= 0.7):
             total_result = total_score.index(max(total_score))
         else:
             total_result = total_score.index(max(total_score[1:]))
+
 
 
 
