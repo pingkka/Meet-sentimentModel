@@ -1,4 +1,5 @@
-#import test_class
+# import test_class
+# import test_class_ori
 #import test_audio_class
 import test_text_class
 import numpy as np
@@ -14,7 +15,7 @@ import time
 #5e258fd1305bcf3ad153a6a4,어 청소 니가 대신 해 줘,0,male
 
 labels = ["none", "joy", "annoy", "sad", "disgust", "surprise", "fear"]
-# classification = test_class.LanoiceClassification()
+# classification = test_class_ori.LanoiceClassification()
 #classification = test_audio_class.audioClassification()
 classification = test_text_class.textClassification()
 directories = os.listdir("test_wav")
@@ -37,9 +38,9 @@ for line in rdr:
     audio_path = "test_wav/" + line[0]+".wav"
     text = line[1]
     start_time = time.time()
-    result = classification.textClassification(text)
+    result = classification.textClassification2(text)
     # result, gender_result = classification.classify(audio_path, text)
-    #result = classification.classify(audio_path,text)
+    # result = classification.classify(audio_path,text)
     end_time = time.time()
     sentiment_total[labels.index(result)]+=1
     print(total)
