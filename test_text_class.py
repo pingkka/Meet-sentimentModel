@@ -14,7 +14,7 @@ class textClassification():
         self.tokenizer = AutoTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
         # GPU 사용
         self.device = torch.device("cuda")
-        self.model = har_model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v4").to(self.device)
+        self.model = har_model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v5").to(self.device)
 
 
     def textClassification(self, text):
@@ -61,7 +61,7 @@ class textClassification():
 
 
 
-# classification = textClassification()
-# text = "난 그런거 너무 싫어"
-# result = classification.textClassification(text)
-# print(result)
+classification = textClassification()
+text = "완전 깜짝놀랐어"
+result = classification.textClassification(text)
+print(result)

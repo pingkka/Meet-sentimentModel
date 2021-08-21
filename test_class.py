@@ -42,7 +42,7 @@ class LanoiceClassification():
         self.device = torch.device("cuda")
 
         # 텍스트 모델 불러오기
-        self.model = har_model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v4").to(self.device)
+        self.model = har_model.HwangariSentimentModel.from_pretrained("Kyuyoung11/haremotions-v5").to(self.device)
 
     def classify(self, audio_path, text):
 
@@ -139,10 +139,11 @@ class LanoiceClassification():
             total_score.append(float(audio_score[i]) + float(text_score[i]))
         #print(text_score, audio_score)
         print(total_score)
-        if (total_score[0] >= 0.9):
+        if (total_score[0] >= 0.7):
             total_result = total_score.index(max(total_score))
         else:
             total_result = total_score.index(max(total_score[1:]))
+
 
 
 
