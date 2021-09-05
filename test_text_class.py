@@ -114,7 +114,7 @@ class textClassification():
         return str(self.labels[result])
 
 
-# classification = textClassification()
-# text = "완전 깜짝놀랐어"
-# result = classification.textClassification(text)
-# print(result)
+classification = textClassification()
+text = "오늘 점심 뭐 먹지"
+result = classification.textClassification(text)
+print(result)

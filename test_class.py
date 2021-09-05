@@ -70,10 +70,13 @@ class LanoiceClassification():
         gender_index = np.argmax(y_chunk_gender_proba)
         if (gender_index == 0):
             filename = 'audio_model/xgb_5_300_0.1_6_m.model'
+            # 음성 모델 불러오기
+            audio_model =  pickle.load(open(filename, 'rb'))
         elif (gender_index == 1):
-            filename = 'audio_model/xgb_1_300_0.1_6_f.model'
-        #음성 모델 불러오기
-        audio_model = pickle.load(open(filename, 'rb'))
+            filename = 'audio_model/xgb_7_400_0.1_7_f.model'
+            # 음성 모델 불러오기
+            audio_model = pickle.load(open(filename, 'rb'))
+
 
         y_chunk_model1_proba = audio_model.predict_proba(x_chunk)
         #y_chunk_model1_proba = audio_model.predict(x_chunk)
@@ -134,7 +137,7 @@ class LanoiceClassification():
         #결과 합산(1) - 단순 합산
         for i in range(0, len(label_loss)):
             text_score.append(label_loss[i] / (sum(label_loss) + 10))
-            audio_score.append(y_chunk_model1_proba[0][i])
+            audio_score.append(y_chunk_model1_proba[0][i] - 0.2)
         for i in range(0, len(audio_score)):
             total_score.append(float(audio_score[i]) + float(text_score[i]))
         #print(text_score, audio_score)

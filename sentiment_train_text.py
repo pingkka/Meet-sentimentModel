@@ -39,8 +39,8 @@ def draw_graph(epochs, accuracies):
 def train():
 
     #트위터 크롤링 후 라벨링한 csv 파일 (저작권 문제로 github에는 업로드 하지 않음)
-    train_dataset = preprocessing_text.HwangariDataset("csv/result_sentiment_9000_train_none.csv")
-    test_dataset = preprocessing_text.HwangariDataset("csv/result_sentiment_9000_test_none.csv")
+    train_dataset = preprocessing_text.HwangariDataset("csv/result_sentiment_9000_train_none2.csv")
+    test_dataset = preprocessing_text.HwangariDataset("csv/result_sentiment_9000_test_none2.csv")
 
     # GPU 사용
     device = torch.device("cuda")
