@@ -73,7 +73,7 @@ class LanoiceClassification():
             # 음성 모델 불러오기
             audio_model =  pickle.load(open(filename, 'rb'))
         elif (gender_index == 1):
-            filename = 'audio_model/xgb_7_400_0.1_7_f.model'
+            filename = 'audio_model/xgb_1_300_0.1_6_f.model'
             # 음성 모델 불러오기
             audio_model = pickle.load(open(filename, 'rb'))
 
